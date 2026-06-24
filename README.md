@@ -1,8 +1,8 @@
 # Fabric
 
-Fabric is a repo-local coordination CLI for disposable agent threads.
+Fabric is a repo-local coordination CLI for disposable agent threads. It records small pieces of project direction and surfaces the relevant subset to each thread at the right time.
 
-V0 proves one loop:
+The core loop:
 
 ```text
 Human corrects Thread A
@@ -15,15 +15,18 @@ Human corrects Thread A
 
 The command is `fabric`. The object it records is direction.
 
-V1 adds a narrow PR/review continuation loop:
+Direction has three durabilities:
 
-```text
-Reviewer redirects a PR
--> Fabric records that explicit review direction
--> A fresh or follow-up thread runs fabric continue
--> The thread gets a small continuation packet
--> The thread addresses review without replaying the whole PR
-```
+- **live** — shared across active worktrees now, not persisted to the durable ledger
+- **candidate** — probably important, but needs review before becoming durable
+- **durable** — long-term project guidance, committed to `.fabric/ledger/events.jsonl`
+
+Direction also has a lifecycle status:
+
+- **active** — current and actionable
+- **expired** — useful during a task/PR, but its window is over
+- **discarded** — too specific, noisy, or wrong
+- **superseded** — replaced by newer direction
 
 ## Demo
 
@@ -33,7 +36,7 @@ Build the CLI:
 go build -o fabric ./cmd/fabric
 ```
 
-Run the V0 validation loop:
+Run the basic sync loop:
 
 ```bash
 fabric init
@@ -43,7 +46,7 @@ fabric note --thread thread-a --issue VS-123 --area virtual-store/listing "Don't
 fabric sync --thread thread-b --budget 300
 ```
 
-Run the V1 PR/review continuation loop:
+Run the PR/review continuation loop:
 
 ```bash
 fabric init
@@ -52,6 +55,16 @@ fabric note --issue VS-123 --area file-opening "Do not implement full Office pre
 fabric review note --pr 123 --issue VS-123 --area file-opening "Reviewer rejected picker-level Office special-casing; move unsupported file handling into the shared file-open resolver."
 fabric continue --pr 123 --thread thread-c --budget 700
 fabric explain --pr 123
+```
+
+When a PR or issue is done, consolidate its direction:
+
+```bash
+fabric consolidate --pr 123
+# Review .fabric/generated/CONSOLIDATION.md
+# Then promote useful lessons or expire temporary ones:
+fabric promote evt_000024 --reason "Reusable review-ingest product direction"
+fabric expire evt_000025 --reason "PR-local checklist item completed"
 ```
 
 Or run the demo script from a scratch directory:
@@ -99,11 +112,18 @@ Adjust your plan before continuing.
     TASK_DIRECTION.md
     SYNC_DELTA.md
     CONTINUATION_CONTEXT.md
-    AGENTS_SNIPPET.md
+    CHALLENGE.md
+    PR_REVIEW_INGEST.md
+    HANDOFF.md
+    CONSOLIDATION.md
   skills/
     preflight/SKILL.md
     sync/SKILL.md
     note/SKILL.md
+    continue/SKILL.md
+    challenge/SKILL.md
+    pr-review-ingest/SKILL.md
+    consolidate-after-merge/SKILL.md
 ```
 
 There is no database, server, daemon, LLM call, transcript storage, dashboard, automatic PR mining, webhook, or GitHub app.
@@ -112,14 +132,29 @@ There is no database, server, daemon, LLM call, transcript storage, dashboard, a
 
 ```bash
 fabric init
+fabric install-agents
 fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
 fabric note --thread thread-a --issue VS-123 --area virtual-store/listing "Prefer the existing endpoint"
+fabric note --candidate "Direction that may matter later"
+fabric note --durable "Long-term project guidance"
 fabric review note --pr 123 --issue VS-123 --area file-opening "Reviewer rejected picker-level Office special-casing; move unsupported file handling into the shared file-open resolver."
 fabric sync --thread thread-b --budget 300
 fabric preflight "add filtering to virtual-store listing" --issue VS-123 --area virtual-store/listing --budget 800
 fabric continue --pr 123 --thread thread-c --budget 700
+fabric challenge --direction evt_000001 --pr 123 --issue VS-123 --proposal "New path" --reason "Why the existing direction may not apply"
+fabric challenge resolve evt_000003 --accepted
 fabric explain --issue VS-123
 fabric explain --pr 123
+fabric ingest-pr template --pr 123 --issue VS-123 --area review-ingest
+fabric ingest-pr --pr 123 --issue VS-123 --area review-ingest --from-file review.md
+fabric handoff --pr 123 --budget 900
+fabric consolidate --pr 123
+fabric consolidate --issue VS-123
+fabric promote evt_000024 --reason "Reusable review-ingest product direction"
+fabric expire evt_000025 --reason "PR-local checklist item completed"
+fabric discard evt_000027 --reason "too specific to this PR"
+fabric keep evt_000026 --candidate
+fabric doctor
 ```
 
 ## Test
