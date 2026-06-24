@@ -276,7 +276,7 @@ Use the repository skills for detailed workflows:
 - $fabric-consolidate
 - $fabric-publish, only for explicitly requested GitHub writes
 
-If these skills are unavailable, run fabric install-agents. It installs the managed fabric-* skills globally under ~/.agents/skills and refreshes this repository protocol without changing unrelated user skills.
+If these skills are unavailable, run fabric install-agents. It installs the managed fabric-* skills globally under ~/.agents/skills, links them into detected Cursor and Claude skill directories, and refreshes this repository protocol without changing unrelated user skills.
 
 Commit AGENTS.md, .agents/skills/**, .fabric/config.yaml, and candidate/durable ledger direction. Do not commit generated checkpoints, thread state, or the Git-common runtime mirror.
 `

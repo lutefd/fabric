@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -178,11 +179,18 @@ func runInstallAgents(args []string) error {
 	if err := installAgentSkills(globalSkillsRoot, true); err != nil {
 		return err
 	}
+	providerRoots, err := installDetectedProviderSkillLinks(globalSkillsRoot)
+	if err != nil {
+		return err
+	}
 	if err := installRootAgentsFile("AGENTS.md", rootAgentsBlock()); err != nil {
 		return err
 	}
 	fmt.Println("Installed Direction Fabric protocol in AGENTS.md")
 	fmt.Printf("Installed Direction Fabric skills globally in %s\n", globalSkillsRoot)
+	for _, root := range providerRoots {
+		fmt.Printf("Linked Direction Fabric skills into %s\n", root)
+	}
 	return nil
 }
 
@@ -213,6 +221,116 @@ func installAgentSkills(root string, update bool) error {
 		}
 	}
 	return nil
+}
+
+type agentProvider struct {
+	command       string
+	skillsRootDir string
+	markers       []string
+}
+
+func installDetectedProviderSkillLinks(sourceRoot string) ([]string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	providers := []agentProvider{
+		{
+			command:       "cursor",
+			skillsRootDir: ".cursor",
+			markers: []string{
+				filepath.Join(home, ".cursor"),
+				filepath.Join(home, "Applications", "Cursor.app"),
+				"/Applications/Cursor.app",
+			},
+		},
+		{
+			command:       "claude",
+			skillsRootDir: ".claude",
+			markers: []string{
+				filepath.Join(home, ".claude"),
+				filepath.Join(home, ".local", "bin", "claude"),
+				filepath.Join(home, "Applications", "Claude.app"),
+				"/Applications/Claude.app",
+			},
+		},
+	}
+
+	var installedRoots []string
+	for _, provider := range providers {
+		if !agentProviderInstalled(provider) {
+			continue
+		}
+		destinationRoot := filepath.Join(home, provider.skillsRootDir, "skills")
+		if err := mkdirAll(destinationRoot); err != nil {
+			return nil, err
+		}
+		for _, name := range agentSkillNames() {
+			source := filepath.Join(sourceRoot, name)
+			destination := filepath.Join(destinationRoot, name)
+			if err := ensureSkillLink(source, destination); err != nil {
+				return nil, err
+			}
+		}
+		installedRoots = append(installedRoots, destinationRoot)
+	}
+	return installedRoots, nil
+}
+
+func agentProviderInstalled(provider agentProvider) bool {
+	if _, err := exec.LookPath(provider.command); err == nil {
+		return true
+	}
+	for _, marker := range provider.markers {
+		if _, err := os.Stat(marker); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func ensureSkillLink(source, destination string) error {
+	info, err := os.Lstat(destination)
+	if errors.Is(err, os.ErrNotExist) {
+		return os.Symlink(source, destination)
+	}
+	if err != nil {
+		return err
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		return fmt.Errorf("%s exists and is not a symlink; refusing to replace it", destination)
+	}
+
+	target, err := os.Readlink(destination)
+	if err != nil {
+		return err
+	}
+	if !filepath.IsAbs(target) {
+		target = filepath.Join(filepath.Dir(destination), target)
+	}
+	sourceAbsolute, err := filepath.Abs(source)
+	if err != nil {
+		return err
+	}
+	targetAbsolute, err := filepath.Abs(target)
+	if err != nil {
+		return err
+	}
+	if filepath.Clean(sourceAbsolute) != filepath.Clean(targetAbsolute) {
+		return fmt.Errorf("%s points to %s; refusing to replace it", destination, target)
+	}
+	return nil
+}
+
+func agentSkillNames() []string {
+	return []string{
+		"fabric-session",
+		"fabric-record-direction",
+		"fabric-pr-direction",
+		"fabric-consolidate",
+		"fabric-publish",
+	}
 }
 
 func runThread(args []string) error {

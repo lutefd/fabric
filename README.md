@@ -155,7 +155,7 @@ Install the agent protocol into `AGENTS.md` and install the managed Fabric skill
 fabric install-agents
 ```
 
-The global installation refreshes only the namespaced `fabric-*` skills and preserves unrelated user skills. The repo-local copies remain checked in so agents can discover the protocol before global installation and so teams can review the exact workflows they adopt.
+The global installation refreshes only the namespaced `fabric-*` skills and preserves unrelated user skills. When Cursor or Claude is installed, Fabric also creates per-skill links under `~/.cursor/skills/` or `~/.claude/skills/` so each provider can use its native discovery path. Existing non-symlink destinations are never replaced. The repo-local copies remain checked in so agents can discover the protocol before global installation and so teams can review the exact workflows they adopt.
 
 Start threads and record direction:
 

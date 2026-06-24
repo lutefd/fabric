@@ -46,6 +46,7 @@ func TestGeneratedAgentSkillsHaveMetadataAndFocusedWorkflows(t *testing.T) {
 
 func TestInstallAgentsPreservesUnrelatedSkills(t *testing.T) {
 	chdirTemp(t)
+	t.Setenv("PATH", t.TempDir())
 	mustRun(t, "init")
 
 	repoManagedPath := ".agents/skills/fabric-session/SKILL.md"
@@ -81,6 +82,96 @@ func TestInstallAgentsPreservesUnrelatedSkills(t *testing.T) {
 	assertContains(t, output, "Installed Direction Fabric skills globally in "+globalRoot)
 	assertContains(t, mustRead(t, "AGENTS.md"), "# Team instructions")
 	assertContains(t, mustRead(t, "AGENTS.md"), fabricBlockStart)
+}
+
+func TestInstallAgentsLinksSkillsForDetectedProviders(t *testing.T) {
+	chdirTemp(t)
+	t.Setenv("PATH", t.TempDir())
+	mustRun(t, "init")
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(home, ".cursor"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	claudeBinary := filepath.Join(home, ".local", "bin", "claude")
+	if err := os.MkdirAll(filepath.Dir(claudeBinary), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(claudeBinary, []byte("installed\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cursorCustomSkill := filepath.Join(home, ".cursor", "skills", "team-workflow", "SKILL.md")
+	if err := os.MkdirAll(filepath.Dir(cursorCustomSkill), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(cursorCustomSkill, []byte("team owned\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	output := captureStdout(t, func() {
+		mustRun(t, "install-agents")
+	})
+	sourceRoot, err := globalAgentSkillsRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, providerRoot := range []string{
+		filepath.Join(home, ".cursor", "skills"),
+		filepath.Join(home, ".claude", "skills"),
+	} {
+		assertContains(t, output, "Linked Direction Fabric skills into "+providerRoot)
+		for _, name := range agentSkillNames() {
+			link := filepath.Join(providerRoot, name)
+			info, err := os.Lstat(link)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if info.Mode()&os.ModeSymlink == 0 {
+				t.Fatalf("%s is not a symlink", link)
+			}
+			target, err := os.Readlink(link)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := filepath.Join(sourceRoot, name); target != want {
+				t.Fatalf("%s points to %s, want %s", link, target, want)
+			}
+			assertContains(t, mustRead(t, filepath.Join(link, "SKILL.md")), "name: "+name)
+		}
+	}
+	if got := mustRead(t, cursorCustomSkill); got != "team owned\n" {
+		t.Fatalf("custom Cursor skill changed: %q", got)
+	}
+}
+
+func TestInstallAgentsRefusesToReplaceProviderSkill(t *testing.T) {
+	chdirTemp(t)
+	t.Setenv("PATH", t.TempDir())
+	mustRun(t, "init")
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	conflict := filepath.Join(home, ".cursor", "skills", "fabric-session", "SKILL.md")
+	if err := os.MkdirAll(filepath.Dir(conflict), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(conflict, []byte("user owned\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	err = Run([]string{"install-agents"})
+	if err == nil {
+		t.Fatal("install-agents replaced a provider skill directory")
+	}
+	assertContains(t, err.Error(), "refusing to replace it")
+	if got := mustRead(t, conflict); got != "user owned\n" {
+		t.Fatalf("conflicting provider skill changed: %q", got)
+	}
 }
 
 type skillTriggerEval struct {
