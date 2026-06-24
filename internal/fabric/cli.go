@@ -1,6 +1,7 @@
 package fabric
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
@@ -24,6 +25,8 @@ func Run(args []string) error {
 		return runThread(args[1:])
 	case "note":
 		return runNote(args[1:])
+	case "promote":
+		return runPromote(args[1:])
 	case "review":
 		return runReview(args[1:])
 	case "sync":
@@ -55,6 +58,9 @@ Usage:
 	fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
 	fabric status
 	fabric note "Don't repeat this path"
+	fabric note --candidate "Direction that may matter later"
+	fabric note --durable "Long-term project guidance"
+	fabric promote evt_000018
 	fabric review note --pr 123 --issue VS-123 --area virtual-store/listing "Reviewer direction"
 	fabric sync --budget 300
 	fabric preflight "task text" --issue VS-123 --area virtual-store/listing --budget 800
@@ -204,6 +210,9 @@ func runNote(args []string) error {
 	pr := fs.String("pr", "", "pull request number")
 	global := fs.Bool("global", false, "repo-wide note")
 	kind := fs.String("kind", "note", "event kind")
+	live := fs.Bool("live", false, "live only; do not persist to durable ledger")
+	candidate := fs.Bool("candidate", false, "mark as promotion candidate")
+	durable := fs.Bool("durable", false, "persist as durable project direction")
 	areas := stringListFlag{}
 	fs.Var(&areas, "area", "area, repeatable")
 	if err := fs.Parse(args); err != nil {
@@ -215,6 +224,20 @@ func runNote(args []string) error {
 	}
 	if err := ensureInitialized(); err != nil {
 		return err
+	}
+
+	flagCount := 0
+	if *live {
+		flagCount++
+	}
+	if *candidate {
+		flagCount++
+	}
+	if *durable {
+		flagCount++
+	}
+	if flagCount > 1 {
+		return errors.New("only one of --live, --candidate, or --durable may be used")
 	}
 
 	threads, err := loadThreads()
@@ -248,10 +271,24 @@ func runNote(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	durability := DurabilityLive
+	if *durable {
+		durability = DurabilityDurable
+	} else if *candidate {
+		durability = DurabilityCandidate
+	} else if flagCount == 0 {
+		durability, err = promptDurability()
+		if err != nil {
+			return err
+		}
+	}
+
 	event := DirectionEvent{
-		ID:        nextEventID(events),
-		Kind:      *kind,
-		CreatedAt: nowString(),
+		ID:         nextEventID(events),
+		Kind:       *kind,
+		CreatedAt:  nowString(),
+		Durability: durability,
 		Scope: EventScope{
 			Repo:   repoName(),
 			Issue:  *issue,
@@ -280,7 +317,12 @@ func runNote(args []string) error {
 	}
 
 	stale := staleThreads(event, threads)
-	fmt.Printf("Recorded direction %s.\n", event.ID)
+	fmt.Printf("Recorded %s direction %s.\n", durability, event.ID)
+	if isDurableLike(durability) {
+		fmt.Println("Stored in durable ledger and shared across active worktrees.")
+	} else {
+		fmt.Println("Shared across active worktrees. Not persisted to durable ledger.")
+	}
 	fmt.Printf("Marked %d related threads stale", len(stale))
 	if len(stale) == 0 {
 		fmt.Println(".")
@@ -290,6 +332,54 @@ func runNote(args []string) error {
 	for _, id := range stale {
 		fmt.Printf("- %s\n", id)
 	}
+	return nil
+}
+
+func promptDurability() (string, error) {
+	fmt.Println()
+	fmt.Println("Should this become durable project direction?")
+	fmt.Println()
+	fmt.Println("Durable means:")
+	fmt.Println("- it is written to .fabric/ledger/events.jsonl")
+	fmt.Println("- it is intended to be committed to Git")
+	fmt.Println("- future agents, branches, and contributors may treat it as repo-level guidance")
+	fmt.Println("- it should be stable beyond this thread/issue")
+	fmt.Println()
+	fmt.Println("Choose:")
+	fmt.Println("[y] yes, make durable")
+	fmt.Println("[n] no, live only (default)")
+	fmt.Println("[l] later, leave as promotion candidate")
+	fmt.Print("Choice: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println()
+		return DurabilityLive, nil
+	}
+	choice := strings.ToLower(strings.TrimSpace(line))
+	switch choice {
+	case "y", "yes", "durable":
+		return DurabilityDurable, nil
+	case "l", "later", "candidate":
+		return DurabilityCandidate, nil
+	default:
+		return DurabilityLive, nil
+	}
+}
+
+func runPromote(args []string) error {
+	if len(args) != 1 {
+		return errors.New("expected: fabric promote <event-id>")
+	}
+	if err := ensureInitialized(); err != nil {
+		return err
+	}
+	event, err := promoteEvent(args[0])
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Promoted %s to durable project direction.\n", event.ID)
 	return nil
 }
 

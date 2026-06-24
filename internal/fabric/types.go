@@ -1,5 +1,11 @@
 package fabric
 
+const (
+	DurabilityLive      = "live"
+	DurabilityCandidate = "candidate"
+	DurabilityDurable   = "durable"
+)
+
 type DirectionEvent struct {
 	ID         string      `json:"id"`
 	Kind       string      `json:"kind"`
@@ -11,6 +17,7 @@ type DirectionEvent struct {
 	TTL        string      `json:"ttl"`
 	Challenges string      `json:"challenges,omitempty"`
 	Status     string      `json:"status,omitempty"`
+	Durability string      `json:"durability,omitempty"`
 }
 
 type EventScope struct {

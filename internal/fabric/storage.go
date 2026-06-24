@@ -35,38 +35,68 @@ func loadEvents() ([]DirectionEvent, error) {
 	if err := ensureInitialized(); err != nil {
 		return nil, err
 	}
-	var events []DirectionEvent
-	if err := readJSONL(eventsPath, &events); err != nil {
-		return nil, err
-	}
-	sharedPath, err := sharedEventsPath()
+	localEvents, err := loadLocalEvents()
 	if err != nil {
 		return nil, err
 	}
-	if sharedPath != "" {
-		if err := readJSONL(sharedPath, &events); err != nil {
-			return nil, err
-		}
-		events = dedupeEvents(events)
+	sharedEvents, err := loadSharedEvents()
+	if err != nil {
+		return nil, err
 	}
+	events := append(localEvents, sharedEvents...)
+	events = dedupeEvents(events)
 	sort.Slice(events, func(i, j int) bool {
 		return eventNumber(events[i].ID) < eventNumber(events[j].ID)
 	})
 	return events, nil
 }
 
-func appendEvent(event DirectionEvent) error {
-	if err := appendLedger(eventsPath, event); err != nil {
-		return err
+func loadLocalEvents() ([]DirectionEvent, error) {
+	var events []DirectionEvent
+	if err := readJSONL(eventsPath, &events); err != nil {
+		return nil, err
 	}
+	for i := range events {
+		events[i].Durability = normalizeDurability(events[i].Durability)
+	}
+	return events, nil
+}
+
+func loadSharedEvents() ([]DirectionEvent, error) {
+	sharedPath, err := sharedEventsPath()
+	if err != nil {
+		return nil, err
+	}
+	if sharedPath == "" {
+		return nil, nil
+	}
+	var events []DirectionEvent
+	if err := readJSONL(sharedPath, &events); err != nil {
+		return nil, err
+	}
+	for i := range events {
+		events[i].Durability = normalizeDurability(events[i].Durability)
+	}
+	return events, nil
+}
+
+func appendEvent(event DirectionEvent) error {
 	sharedPath, err := sharedEventsPath()
 	if err != nil {
 		return err
 	}
-	if sharedPath == "" {
+	if sharedPath != "" {
+		if err := appendLedger(sharedPath, event); err != nil {
+			return err
+		}
+	}
+	if !isDurableLike(event.Durability) {
+		if sharedPath == "" {
+			return appendLedger(eventsPath, event)
+		}
 		return nil
 	}
-	return appendLedger(sharedPath, event)
+	return appendLedger(eventsPath, event)
 }
 
 func mirrorLocalEventsToShared() error {
@@ -74,31 +104,19 @@ func mirrorLocalEventsToShared() error {
 	if err != nil || sharedPath == "" {
 		return err
 	}
-	var localEvents []DirectionEvent
-	if err := readJSONL(eventsPath, &localEvents); err != nil {
+	localEvents, err := loadLocalEvents()
+	if err != nil {
 		return err
 	}
 	if len(localEvents) == 0 {
 		return nil
 	}
-	var sharedEvents []DirectionEvent
-	if err := readJSONL(sharedPath, &sharedEvents); err != nil {
+	sharedEvents, err := loadSharedEvents()
+	if err != nil {
 		return err
 	}
-	seen := map[string]bool{}
-	for _, event := range sharedEvents {
-		seen[event.ID] = true
-	}
-	for _, event := range localEvents {
-		if event.ID != "" && seen[event.ID] {
-			continue
-		}
-		if err := appendLedger(sharedPath, event); err != nil {
-			return err
-		}
-		seen[event.ID] = true
-	}
-	return nil
+	merged := dedupeEvents(append(sharedEvents, localEvents...))
+	return writeJSONL(sharedPath, merged)
 }
 
 func loadThreads() (map[string]ThreadRecord, error) {
@@ -151,18 +169,92 @@ func resolveThreadID(explicit string) (string, error) {
 }
 
 func dedupeEvents(events []DirectionEvent) []DirectionEvent {
-	seen := map[string]bool{}
-	var deduped []DirectionEvent
+	best := map[string]DirectionEvent{}
 	for _, event := range events {
-		if event.ID != "" {
-			if seen[event.ID] {
-				continue
-			}
-			seen[event.ID] = true
+		if event.ID == "" {
+			continue
 		}
+		existing, ok := best[event.ID]
+		if !ok || durabilityRank(event.Durability) > durabilityRank(existing.Durability) {
+			best[event.ID] = event
+		}
+	}
+	var deduped []DirectionEvent
+	for _, event := range best {
 		deduped = append(deduped, event)
 	}
 	return deduped
+}
+
+func normalizeDurability(d string) string {
+	if d == "" {
+		return DurabilityDurable
+	}
+	return d
+}
+
+func isDurableLike(d string) bool {
+	switch normalizeDurability(d) {
+	case DurabilityDurable, DurabilityCandidate:
+		return true
+	default:
+		return false
+	}
+}
+
+func durabilityRank(d string) int {
+	switch normalizeDurability(d) {
+	case DurabilityDurable:
+		return 3
+	case DurabilityCandidate:
+		return 2
+	case DurabilityLive:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func promoteEvent(eventID string) (DirectionEvent, error) {
+	var promoted DirectionEvent
+	localEvents, err := loadLocalEvents()
+	if err != nil {
+		return promoted, err
+	}
+	found := false
+	for i := range localEvents {
+		if localEvents[i].ID == eventID {
+			if localEvents[i].Durability == DurabilityDurable {
+				return promoted, fmt.Errorf("event %s is already durable", eventID)
+			}
+			localEvents[i].Durability = DurabilityDurable
+			found = true
+			promoted = localEvents[i]
+		}
+	}
+	if !found {
+		return promoted, fmt.Errorf("event %s not found or is not a promotion candidate", eventID)
+	}
+	if err := writeJSONL(eventsPath, localEvents); err != nil {
+		return promoted, err
+	}
+	sharedPath, err := sharedEventsPath()
+	if err != nil {
+		return promoted, err
+	}
+	if sharedPath == "" {
+		return promoted, nil
+	}
+	sharedEvents, err := loadSharedEvents()
+	if err != nil {
+		return promoted, err
+	}
+	for i := range sharedEvents {
+		if sharedEvents[i].ID == eventID {
+			sharedEvents[i].Durability = DurabilityDurable
+		}
+	}
+	return promoted, writeJSONL(sharedPath, sharedEvents)
 }
 
 func readJSONL[T any](path string, out *[]T) error {
@@ -235,6 +327,27 @@ func writeFile(path, content string) error {
 		return err
 	}
 	return os.WriteFile(path, []byte(content), 0o644)
+}
+
+func writeJSONL[T any](path string, values []T) error {
+	if err := mkdirAll(filepath.Dir(path)); err != nil {
+		return err
+	}
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	for _, value := range values {
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		if _, err := file.Write(append(encoded, '\n')); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func installRootAgentsFile(path, block string) error {
