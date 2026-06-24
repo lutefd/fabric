@@ -3,9 +3,8 @@
 
 Fabric is the repository decision and provenance protocol for agent threads and worktrees. The CLI manages the protocol; agents are its primary clients.
 
-- Before substantive multi-step implementation, use $fabric-session to inspect shared direction.
-- Skip session setup for read-only inspection, simple questions, release or tag creation, and one-off git or gh commands.
-- Before a meaningful implementation checkpoint, approach change, or handoff, run fabric sync and read .fabric/generated/SYNC_DELTA.md.
+- Before work, run fabric status and fabric preflight, then read .fabric/generated/TASK_DIRECTION.md.
+- Before changing approach, opening a PR, or resuming work, run fabric sync and read .fabric/generated/SYNC_DELTA.md.
 - When corrected by a human, preserve the direction and rationale with Fabric.
 - Never silently violate active direction; align, ask for an exception, or record a challenge.
 - Treat .fabric/ledger/events/ and the shared .git/fabric runtime as shared repository state.
