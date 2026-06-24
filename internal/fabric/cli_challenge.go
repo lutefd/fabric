@@ -53,7 +53,6 @@ func runChallengeCreate(args []string) error {
 
 	text := challengeText(*directionID, *proposal, *reason)
 	event := DirectionEvent{
-		ID:        nextEventID(events),
 		Kind:      "challenge",
 		CreatedAt: nowString(),
 		Scope: EventScope{
@@ -69,7 +68,7 @@ func runChallengeCreate(args []string) error {
 		Challenges: *directionID,
 		Status:     "open",
 	}
-	if err := appendEvent(event); err != nil {
+	if err := appendEvent(&event); err != nil {
 		return err
 	}
 	if err := writeFile(challengePath, challengeMarkdown(challenged, event, *proposal, *reason)); err != nil {
@@ -134,7 +133,6 @@ func runChallengeResolve(args []string) error {
 
 	text := resolutionText(challengeID, status, *reason)
 	event := DirectionEvent{
-		ID:         nextEventID(events),
 		Kind:       "challenge_resolution",
 		CreatedAt:  nowString(),
 		Scope:      challenge.Scope,
@@ -145,7 +143,7 @@ func runChallengeResolve(args []string) error {
 		Challenges: challengeID,
 		Status:     status,
 	}
-	if err := appendEvent(event); err != nil {
+	if err := appendEvent(&event); err != nil {
 		return err
 	}
 	fmt.Printf("Recorded challenge resolution %s for %s: %s.\n", event.ID, challengeID, status)

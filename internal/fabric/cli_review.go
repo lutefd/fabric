@@ -35,13 +35,11 @@ func runReview(args []string) error {
 	if text == "" {
 		return errors.New("review note text is required")
 	}
-
-	events, err := loadEvents()
-	if err != nil {
+	if err := ensureInitialized(); err != nil {
 		return err
 	}
+
 	event := DirectionEvent{
-		ID:        nextEventID(events),
 		Kind:      "review_direction",
 		CreatedAt: nowString(),
 		Scope: EventScope{
@@ -58,7 +56,7 @@ func runReview(args []string) error {
 		Confidence: "reviewer_confirmed",
 		TTL:        "until_pr_closed",
 	}
-	if err := appendEvent(event); err != nil {
+	if err := appendEvent(&event); err != nil {
 		return err
 	}
 	threads, err := loadThreads()

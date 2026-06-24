@@ -41,6 +41,8 @@ func Run(args []string) error {
 		return runChallenge(args[1:])
 	case "explain":
 		return runExplain(args[1:])
+	case "doctor":
+		return runDoctor(args[1:])
 	case "help", "-h", "--help":
 		printUsage()
 		return nil
@@ -69,6 +71,7 @@ Usage:
 	fabric challenge resolve evt_000003 --accepted
 	fabric explain --issue VS-123
 	fabric explain --pr 123
+	fabric doctor
 `)
 }
 
@@ -304,7 +307,7 @@ func runNote(args []string) error {
 		Confidence: "human_confirmed",
 		TTL:        "until_issue_closed",
 	}
-	if err := appendEvent(event); err != nil {
+	if err := appendEvent(&event); err != nil {
 		return err
 	}
 	if *thread != "" {
@@ -480,6 +483,12 @@ func runStatus(args []string) error {
 			fmt.Printf("%d new relevant directions available.\n", len(matches))
 			fmt.Println("Run: fabric sync")
 		}
+		fmt.Println()
+		counts := eventDurabilityCounts(events)
+		fmt.Println("Direction durability:")
+		fmt.Printf("- live: %d\n", counts[DurabilityLive])
+		fmt.Printf("- candidate: %d\n", counts[DurabilityCandidate])
+		fmt.Printf("- durable: %d\n", counts[DurabilityDurable])
 	} else if current != "" {
 		fmt.Printf("unknown current thread %q\n", current)
 		fmt.Println()
@@ -577,6 +586,74 @@ func parsePreflightArgs(args []string) (string, stringListFlag, int, []string, e
 		}
 	}
 	return issue, areas, budget, taskParts, nil
+}
+
+func runDoctor(args []string) error {
+	fs := flag.NewFlagSet("doctor", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	report, err := ledgerHealth()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Fabric doctor")
+	fmt.Println()
+
+	fmt.Println("Shared mirror:")
+	if report.SharedMirrorOK {
+		fmt.Println("ok")
+	} else {
+		fmt.Printf("error: %s\n", report.SharedMirrorError)
+	}
+	fmt.Println()
+
+	fmt.Println("Durable ledger:")
+	if report.DurableLedgerOK {
+		fmt.Println("ok")
+	} else {
+		fmt.Printf("error: %s\n", report.DurableLedgerError)
+	}
+	fmt.Println()
+
+	fmt.Println("Events:")
+	fmt.Printf("- live: %d\n", report.Counts[DurabilityLive])
+	fmt.Printf("- candidate: %d\n", report.Counts[DurabilityCandidate])
+	fmt.Printf("- durable: %d\n", report.Counts[DurabilityDurable])
+	fmt.Println()
+
+	fmt.Println("Integrity:")
+	printDoctorList("- duplicate IDs: ", report.DuplicateIDs, "none")
+	printDoctorList("- invalid JSONL: ", report.InvalidLines, "none")
+	printDoctorList("- durable/shared mismatch: ", report.DurableSharedMismatches, "none")
+	fmt.Println()
+
+	current, err := loadCurrentThreadID()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Current thread:")
+	if current == "" {
+		fmt.Println("none")
+	} else {
+		fmt.Println(current)
+	}
+
+	return nil
+}
+
+func printDoctorList(label string, items []string, none string) {
+	if len(items) == 0 {
+		fmt.Printf("%s%s\n", label, none)
+		return
+	}
+	fmt.Println(label)
+	for _, item := range items {
+		fmt.Printf("  - %s\n", item)
+	}
 }
 
 func runExplain(args []string) error {
