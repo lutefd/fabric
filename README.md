@@ -137,7 +137,7 @@ explicit approval.
 Fabric requires Go 1.22 or newer.
 
 ```bash
-go install github.com/lutefd/fabric@v0.1.0
+go install github.com/lutefd/fabric@latest
 fabric version
 ```
 
