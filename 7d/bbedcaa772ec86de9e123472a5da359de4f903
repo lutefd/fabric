@@ -1,0 +1,27 @@
+internal/fabric/templates.go
+  s_bcee998e9638f4::t_964c5ae4dd50aa 279
+AGENTS.md
+  s_bcee998e9638f4::t_964c5ae4dd50aa 21
+internal/fabric/cli.go
+  s_bcee998e9638f4::t_964c5ae4dd50aa 9,182-185,191-193,226-334
+internal/fabric/agent_skills_test.go
+  s_bcee998e9638f4::t_964c5ae4dd50aa 49,87-175
+README.md
+  s_bcee998e9638f4::t_964c5ae4dd50aa 158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "7dbbedcaa772ec86de9e123472a5da359de4f903",
+  "prompts": {},
+  "sessions": {
+    "s_bcee998e9638f4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb5a-4e39-7f43-951a-d46cf35700d4",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
