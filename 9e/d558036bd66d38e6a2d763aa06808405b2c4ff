@@ -1,0 +1,20 @@
+docs/why-fabric-exists.md
+  s_e35cfdcf98def0::t_277d467887e857 1-143,149-240
+  s_e35cfdcf98def0::t_ef1720212e318d 144-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "9ed558036bd66d38e6a2d763aa06808405b2c4ff",
+  "prompts": {},
+  "sessions": {
+    "s_e35cfdcf98def0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efbbd-9951-7b90-aaac-d2b72e6cacb5",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
