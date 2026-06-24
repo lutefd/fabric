@@ -58,7 +58,7 @@ func runReview(args []string) error {
 		Confidence: "reviewer_confirmed",
 		TTL:        "until_pr_closed",
 	}
-	if err := appendLedger(eventsPath, event); err != nil {
+	if err := appendEvent(event); err != nil {
 		return err
 	}
 	threads, err := loadThreads()

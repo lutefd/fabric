@@ -18,6 +18,8 @@ func Run(args []string) error {
 	switch args[0] {
 	case "init":
 		return runInit(args[1:])
+	case "install-agents":
+		return runInstallAgents(args[1:])
 	case "thread":
 		return runThread(args[1:])
 	case "note":
@@ -26,6 +28,8 @@ func Run(args []string) error {
 		return runReview(args[1:])
 	case "sync":
 		return runSync(args[1:])
+	case "status":
+		return runStatus(args[1:])
 	case "preflight":
 		return runPreflight(args[1:])
 	case "continue":
@@ -47,10 +51,12 @@ func printUsage() {
 
 Usage:
 	fabric init
+	fabric install-agents
 	fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
-	fabric note --thread thread-a --issue VS-123 --area virtual-store/listing "Don't repeat this path"
+	fabric status
+	fabric note "Don't repeat this path"
 	fabric review note --pr 123 --issue VS-123 --area virtual-store/listing "Reviewer direction"
-	fabric sync --thread thread-b --budget 300
+	fabric sync --budget 300
 	fabric preflight "task text" --issue VS-123 --area virtual-store/listing --budget 800
 	fabric continue --pr 123 --budget 700
 	fabric challenge --direction evt_000001 --pr 123 --issue VS-123 --proposal "New path" --reason "Why"
@@ -88,6 +94,7 @@ func runInit(args []string) error {
 		path    string
 		content string
 		touch   bool
+		update  bool
 	}{
 		{path: configPath, content: defaultConfig(repo)},
 		{path: eventsPath, touch: true},
@@ -97,11 +104,13 @@ func runInit(args []string) error {
 		{path: ".fabric/skills/note/SKILL.md", content: noteSkill()},
 		{path: ".fabric/skills/continue/SKILL.md", content: continueSkill()},
 		{path: ".fabric/skills/challenge/SKILL.md", content: challengeSkill()},
-		{path: agentsPath, content: agentsSnippet()},
+		{path: agentsPath, content: agentsSnippet(), update: true},
 	}
 	for _, file := range files {
 		var err error
-		if file.touch {
+		if file.update {
+			err = writeFile(file.path, file.content)
+		} else if file.touch {
 			err = touchIfMissing(file.path)
 		} else {
 			err = writeFileIfMissing(file.path, file.content)
@@ -110,6 +119,9 @@ func runInit(args []string) error {
 			return err
 		}
 	}
+	if err := mirrorLocalEventsToShared(); err != nil {
+		return err
+	}
 
 	fmt.Println("Initialized Fabric in .fabric/")
 	fmt.Println("Created config.yaml")
@@ -117,6 +129,22 @@ func runInit(args []string) error {
 	fmt.Println("Created ledger/threads.jsonl")
 	fmt.Println("Created generated/")
 	fmt.Println("Created skills/")
+	return nil
+}
+
+func runInstallAgents(args []string) error {
+	fs := flag.NewFlagSet("install-agents", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if err := ensureInitialized(); err != nil {
+		return err
+	}
+	if err := installRootAgentsFile("AGENTS.md", rootAgentsBlock()); err != nil {
+		return err
+	}
+	fmt.Println("Installed Direction Fabric protocol in AGENTS.md")
 	return nil
 }
 
@@ -158,9 +186,13 @@ func runThread(args []string) error {
 	if err := appendLedger(threadsPath, record); err != nil {
 		return err
 	}
+	if err := saveCurrentThreadID(*id); err != nil {
+		return err
+	}
 
 	fmt.Printf("Started thread %s for issue %s, PR %s, area %s.\n", *id, emptyAsNone(*issue), emptyAsNone(*pr), areas.StringOrNone())
 	fmt.Printf("Last seen event: %s.\n", emptyAsNone(lastSeen))
+	fmt.Printf("Current thread: %s.\n", *id)
 	return nil
 }
 
@@ -169,6 +201,7 @@ func runNote(args []string) error {
 	fs.SetOutput(os.Stderr)
 	thread := fs.String("thread", "", "source thread id")
 	issue := fs.String("issue", "", "issue key")
+	pr := fs.String("pr", "", "pull request number")
 	global := fs.Bool("global", false, "repo-wide note")
 	kind := fs.String("kind", "note", "event kind")
 	areas := stringListFlag{}
@@ -188,19 +221,27 @@ func runNote(args []string) error {
 	if err != nil {
 		return err
 	}
-	if *thread != "" && *issue == "" && len(areas) == 0 {
+	if *thread == "" {
+		if current, err := loadCurrentThreadID(); err != nil {
+			return err
+		} else if current != "" {
+			*thread = current
+		}
+	}
+	if *thread != "" && *issue == "" && *pr == "" && len(areas) == 0 {
 		if existing, ok := threads[*thread]; ok {
 			*issue = existing.Issue
+			*pr = existing.PR
 			areas = existing.Areas
 		}
 	}
-	if *issue == "" && len(areas) == 0 && !*global {
+	if *issue == "" && *pr == "" && len(areas) == 0 && !*global {
 		if branchIssue := issueFromBranch(); branchIssue != "" {
 			*issue = branchIssue
 		}
 	}
-	if *issue == "" && len(areas) == 0 && !*global {
-		return errors.New("scope is required; pass --issue/--area, use a known --thread, or pass --global")
+	if *issue == "" && *pr == "" && len(areas) == 0 && !*global {
+		return errors.New("no current thread found; run fabric thread start --issue ... --area ... or pass --issue/--area explicitly")
 	}
 
 	events, err := loadEvents()
@@ -214,6 +255,7 @@ func runNote(args []string) error {
 		Scope: EventScope{
 			Repo:   repoName(),
 			Issue:  *issue,
+			PR:     *pr,
 			Areas:  areas,
 			Global: *global,
 		},
@@ -225,7 +267,7 @@ func runNote(args []string) error {
 		Confidence: "human_confirmed",
 		TTL:        "until_issue_closed",
 	}
-	if err := appendLedger(eventsPath, event); err != nil {
+	if err := appendEvent(event); err != nil {
 		return err
 	}
 	if *thread != "" {
@@ -259,17 +301,18 @@ func runSync(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	if *threadID == "" {
-		return errors.New("sync requires --thread")
+	resolvedThreadID, err := resolveThreadID(*threadID)
+	if err != nil {
+		return err
 	}
 
 	threads, err := loadThreads()
 	if err != nil {
 		return err
 	}
-	thread, ok := threads[*threadID]
+	thread, ok := threads[resolvedThreadID]
 	if !ok {
-		return fmt.Errorf("unknown thread %q; run fabric thread start first", *threadID)
+		return fmt.Errorf("unknown thread %q; run fabric thread start first", resolvedThreadID)
 	}
 	events, err := loadEvents()
 	if err != nil {
@@ -277,10 +320,10 @@ func runSync(args []string) error {
 	}
 	matches := relevantEventsSinceForScope(events, thread.Issue, thread.PR, thread.Areas, thread.LastSeenEventID)
 	if len(matches) == 0 {
-		if err := writeFile(syncPath, noSyncMarkdown(*threadID)); err != nil {
+		if err := writeFile(syncPath, noSyncMarkdown(resolvedThreadID)); err != nil {
 			return err
 		}
-		fmt.Printf("No new relevant direction for %s.\n", *threadID)
+		fmt.Printf("No new relevant direction for %s.\n", resolvedThreadID)
 		return nil
 	}
 	capped, omitted := capEventsByBudget(prioritizedEvents(matches, thread.Issue, thread.PR, thread.Areas), *budget)
@@ -294,6 +337,78 @@ func runSync(args []string) error {
 		return err
 	}
 	fmt.Print(markdown)
+	return nil
+}
+
+func runStatus(args []string) error {
+	fs := flag.NewFlagSet("status", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	current, err := loadCurrentThreadID()
+	if err != nil {
+		return err
+	}
+	threads, err := loadThreads()
+	if err != nil {
+		return err
+	}
+	events, err := loadEvents()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Current thread:")
+	if current == "" {
+		fmt.Println("none")
+	} else {
+		fmt.Println(current)
+	}
+	fmt.Println()
+	fmt.Println("Scope:")
+	if thread, ok := threads[current]; ok {
+		fmt.Printf("issue: %s\n", emptyAsNone(thread.Issue))
+		fmt.Printf("pr: %s\n", emptyAsNone(thread.PR))
+		fmt.Println("areas:")
+		if len(thread.Areas) == 0 {
+			fmt.Println("- none")
+		} else {
+			for _, area := range thread.Areas {
+				fmt.Printf("- %s\n", area)
+			}
+		}
+		fmt.Println()
+		matches := relevantEventsSinceForScope(events, thread.Issue, thread.PR, thread.Areas, thread.LastSeenEventID)
+		fmt.Println("Sync state:")
+		if len(matches) == 0 {
+			fmt.Println("No new relevant directions.")
+		} else if len(matches) == 1 {
+			fmt.Println("1 new relevant direction available.")
+			fmt.Println("Run: fabric sync")
+		} else {
+			fmt.Printf("%d new relevant directions available.\n", len(matches))
+			fmt.Println("Run: fabric sync")
+		}
+	} else if current != "" {
+		fmt.Printf("unknown current thread %q\n", current)
+		fmt.Println()
+		fmt.Println("Sync state:")
+		fmt.Println("Run: fabric thread start --issue ... --area ...")
+	} else {
+		fmt.Println("issue: none")
+		fmt.Println("pr: none")
+		fmt.Println("areas:")
+		fmt.Println("- none")
+		fmt.Println()
+		fmt.Println("Sync state:")
+		fmt.Println("Run: fabric thread start --issue ... --area ...")
+	}
+	fmt.Println()
+	fmt.Println("Generated files:")
+	for _, path := range generatedFiles() {
+		fmt.Printf("- %s\n", path)
+	}
 	return nil
 }
 

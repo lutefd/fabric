@@ -25,6 +25,10 @@ func runContinue(args []string) error {
 	if *budget <= 0 {
 		return errors.New("--budget must be positive")
 	}
+	resolvedThreadID, err := resolveThreadID(*threadID)
+	if err != nil {
+		return err
+	}
 
 	events, err := loadEvents()
 	if err != nil {
@@ -37,18 +41,19 @@ func runContinue(args []string) error {
 	if err := writeFile(continuePath, markdown); err != nil {
 		return err
 	}
-	if *threadID != "" {
-		record := ThreadRecord{
-			ThreadID:        *threadID,
-			CreatedAt:       nowString(),
-			Issue:           resolvedIssue,
-			PR:              *pr,
-			Areas:           resolvedAreas,
-			LastSeenEventID: latestEventID(matches),
-		}
-		if err := appendLedger(threadsPath, record); err != nil {
-			return err
-		}
+	record := ThreadRecord{
+		ThreadID:        resolvedThreadID,
+		CreatedAt:       nowString(),
+		Issue:           resolvedIssue,
+		PR:              *pr,
+		Areas:           resolvedAreas,
+		LastSeenEventID: latestEventID(matches),
+	}
+	if err := appendLedger(threadsPath, record); err != nil {
+		return err
+	}
+	if err := saveCurrentThreadID(resolvedThreadID); err != nil {
+		return err
 	}
 	fmt.Print(markdown)
 	return nil

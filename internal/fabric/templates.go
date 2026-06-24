@@ -59,41 +59,37 @@ If planned work conflicts with active direction, record the explicit dispute wit
 }
 
 func agentsSnippet() string {
+	return rootAgentsProtocol()
+}
+
+func rootAgentsBlock() string {
+	return "<!-- fabric:start -->\n" + rootAgentsProtocol() + "<!-- fabric:end -->\n"
+}
+
+func rootAgentsProtocol() string {
 	return `# Direction Fabric Protocol
 
-Before starting work, run:
+Before starting work:
+- Run fabric status.
+- Run fabric preflight for the task.
+- Read .fabric/generated/TASK_DIRECTION.md.
 
-fabric preflight "<task>" --issue "<issue>" --area "<area>" --budget 800
+Direction events are shared repo state. Do not delete .fabric/ledger/events.jsonl or treat each worktree as isolated; sibling worktrees should hear relevant notes through Fabric.
 
-Read:
+Before major checkpoints:
+- Run fabric sync.
+- Read .fabric/generated/SYNC_DELTA.md.
 
-.fabric/generated/TASK_DIRECTION.md
+When corrected by the human:
+- Run fabric note "<direction>".
 
-Before implementation, before changing approach, before opening a PR, and before resuming old work, run:
-
-fabric sync --thread "<thread-id>" --budget 300
-
-Read:
-
-.fabric/generated/SYNC_DELTA.md
-
-When the human gives project direction, record it:
-
-fabric note --thread "<thread-id>" --issue "<issue>" --area "<area>" "<direction>"
+When continuing PR/review work:
+- Run fabric continue --pr "<pr>".
+- Read .fabric/generated/CONTINUATION_CONTEXT.md.
 
 When PR review redirects the implementation, record it explicitly:
 
 fabric review note --pr "<pr>" --issue "<issue>" --area "<area>" "<review direction>"
-
-When continuing PR/review work in a fresh or follow-up thread, run:
-
-fabric continue --pr "<pr>" --thread "<thread-id>" --budget 700
-
-Read:
-
-.fabric/generated/CONTINUATION_CONTEXT.md
-
-## Challenging direction
 
 If your planned approach conflicts with active direction, do not silently proceed.
 
@@ -119,4 +115,13 @@ Read:
 
 Mention the challenge in the PR or handoff.
 `
+}
+
+func generatedFiles() []string {
+	return []string{
+		taskPath,
+		syncPath,
+		continuePath,
+		challengePath,
+	}
 }
