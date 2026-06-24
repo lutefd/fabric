@@ -71,6 +71,7 @@ func loadLocalEventsUnlocked() ([]DirectionEvent, error) {
 	}
 	for i := range events {
 		events[i].Durability = normalizeDurability(events[i].Durability)
+		events[i].Status = normalizeStatus(events[i].Status)
 	}
 	return events, nil
 }
@@ -89,6 +90,7 @@ func loadSharedEventsUnlocked() ([]DirectionEvent, error) {
 	}
 	for i := range events {
 		events[i].Durability = normalizeDurability(events[i].Durability)
+		events[i].Status = normalizeStatus(events[i].Status)
 	}
 	return events, nil
 }
@@ -248,6 +250,38 @@ func dedupeEvents(events []DirectionEvent) []DirectionEvent {
 	return deduped
 }
 
+func normalizeStatus(s string) string {
+	if s == "" {
+		return StatusActive
+	}
+	return s
+}
+
+func isActiveEvent(event DirectionEvent) bool {
+	status := event.Status
+	if status == "" {
+		status = StatusActive
+	}
+	switch status {
+	case StatusActive, "open", "accepted", "rejected":
+		return true
+	case StatusExpired, StatusDiscarded, StatusSuperseded:
+		return false
+	default:
+		return false
+	}
+}
+
+func filterActiveEvents(events []DirectionEvent) []DirectionEvent {
+	var active []DirectionEvent
+	for _, event := range events {
+		if isActiveEvent(event) {
+			active = append(active, event)
+		}
+	}
+	return active
+}
+
 func normalizeDurability(d string) string {
 	if d == "" {
 		return DurabilityDurable
@@ -289,49 +323,84 @@ func eventDurabilityCounts(events []DirectionEvent) map[string]int {
 	return counts
 }
 
-func promoteEvent(eventID string) (DirectionEvent, error) {
-	var promoted DirectionEvent
+func promoteEvent(eventID, reason string) (DirectionEvent, error) {
+	return updateEvent(eventID, func(event *DirectionEvent) error {
+		if event.Durability == DurabilityDurable {
+			return fmt.Errorf("event %s is already durable", eventID)
+		}
+		event.Durability = DurabilityDurable
+		return nil
+	}, reason)
+}
+
+func updateEvent(eventID string, mutate func(*DirectionEvent) error, reason string) (DirectionEvent, error) {
+	var updated DirectionEvent
 	err := withLedgerLock(func() error {
 		localEvents, err := loadLocalEventsUnlocked()
 		if err != nil {
-			return err
-		}
-		found := false
-		for i := range localEvents {
-			if localEvents[i].ID == eventID {
-				if localEvents[i].Durability == DurabilityDurable {
-					return fmt.Errorf("event %s is already durable", eventID)
-				}
-				localEvents[i].Durability = DurabilityDurable
-				found = true
-				promoted = localEvents[i]
-			}
-		}
-		if !found {
-			return fmt.Errorf("event %s not found or is not a promotion candidate", eventID)
-		}
-		if err := writeJSONL(eventsPath, localEvents); err != nil {
 			return err
 		}
 		sharedPath, err := sharedEventsPath()
 		if err != nil {
 			return err
 		}
-		if sharedPath == "" {
-			return nil
-		}
-		sharedEvents, err := loadSharedEventsUnlocked()
-		if err != nil {
-			return err
-		}
-		for i := range sharedEvents {
-			if sharedEvents[i].ID == eventID {
-				sharedEvents[i].Durability = DurabilityDurable
+		var sharedEvents []DirectionEvent
+		if sharedPath != "" {
+			sharedEvents, err = loadSharedEventsUnlocked()
+			if err != nil {
+				return err
 			}
 		}
-		return writeJSONL(sharedPath, sharedEvents)
+
+		foundLocal := false
+		for i := range localEvents {
+			if localEvents[i].ID != eventID {
+				continue
+			}
+			if err := mutate(&localEvents[i]); err != nil {
+				return err
+			}
+			localEvents[i].ReviewedAt = nowString()
+			if reason != "" {
+				localEvents[i].LifecycleReason = reason
+			}
+			foundLocal = true
+			updated = localEvents[i]
+		}
+
+		foundShared := false
+		for i := range sharedEvents {
+			if sharedEvents[i].ID != eventID {
+				continue
+			}
+			if err := mutate(&sharedEvents[i]); err != nil {
+				return err
+			}
+			sharedEvents[i].ReviewedAt = nowString()
+			if reason != "" {
+				sharedEvents[i].LifecycleReason = reason
+			}
+			foundShared = true
+			if !foundLocal {
+				updated = sharedEvents[i]
+			}
+		}
+
+		if !foundLocal && !foundShared {
+			return fmt.Errorf("event %s not found", eventID)
+		}
+
+		if foundLocal {
+			if err := writeJSONL(eventsPath, localEvents); err != nil {
+				return err
+			}
+		}
+		if foundShared && sharedPath != "" {
+			return writeJSONL(sharedPath, sharedEvents)
+		}
+		return nil
 	})
-	return promoted, err
+	return updated, err
 }
 
 func readJSONL[T any](path string, out *[]T) error {

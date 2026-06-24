@@ -4,25 +4,32 @@ const (
 	DurabilityLive      = "live"
 	DurabilityCandidate = "candidate"
 	DurabilityDurable   = "durable"
+
+	StatusActive     = "active"
+	StatusExpired    = "expired"
+	StatusDiscarded  = "discarded"
+	StatusSuperseded = "superseded"
 )
 
 type DirectionEvent struct {
-	ID             string        `json:"id"`
-	Kind           string        `json:"kind"`
-	CreatedAt      string        `json:"created_at"`
-	Scope          EventScope    `json:"scope"`
-	Source         EventSource   `json:"source"`
-	Text           string        `json:"text"`
-	Confidence     string        `json:"confidence"`
-	TTL            string        `json:"ttl"`
-	Challenges     string        `json:"challenges,omitempty"`
-	Status         string        `json:"status,omitempty"`
-	Durability     string        `json:"durability,omitempty"`
-	ReviewType     string        `json:"review_type,omitempty"`
-	Reason         string        `json:"reason,omitempty"`
-	RejectedPaths  []string      `json:"rejected_paths,omitempty"`
-	PreferredPaths []string      `json:"preferred_paths,omitempty"`
-	Evidence       []EvidenceRef `json:"evidence,omitempty"`
+	ID              string        `json:"id"`
+	Kind            string        `json:"kind"`
+	CreatedAt       string        `json:"created_at"`
+	Scope           EventScope    `json:"scope"`
+	Source          EventSource   `json:"source"`
+	Text            string        `json:"text"`
+	Confidence      string        `json:"confidence"`
+	TTL             string        `json:"ttl"`
+	Challenges      string        `json:"challenges,omitempty"`
+	Status          string        `json:"status,omitempty"`
+	Durability      string        `json:"durability,omitempty"`
+	ReviewType      string        `json:"review_type,omitempty"`
+	Reason          string        `json:"reason,omitempty"`
+	RejectedPaths   []string      `json:"rejected_paths,omitempty"`
+	PreferredPaths  []string      `json:"preferred_paths,omitempty"`
+	Evidence        []EvidenceRef `json:"evidence,omitempty"`
+	LifecycleReason string        `json:"lifecycle_reason,omitempty"`
+	ReviewedAt      string        `json:"reviewed_at,omitempty"`
 }
 
 type EventScope struct {
