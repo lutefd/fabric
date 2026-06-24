@@ -30,6 +30,8 @@ func Run(args []string) error {
 		return runPreflight(args[1:])
 	case "continue":
 		return runContinue(args[1:])
+	case "challenge":
+		return runChallenge(args[1:])
 	case "explain":
 		return runExplain(args[1:])
 	case "help", "-h", "--help":
@@ -51,6 +53,8 @@ Usage:
 	fabric sync --thread thread-b --budget 300
 	fabric preflight "task text" --issue VS-123 --area virtual-store/listing --budget 800
 	fabric continue --pr 123 --budget 700
+	fabric challenge --direction evt_000001 --pr 123 --issue VS-123 --proposal "New path" --reason "Why"
+	fabric challenge resolve evt_000003 --accepted
 	fabric explain --issue VS-123
 	fabric explain --pr 123
 `)
@@ -70,6 +74,8 @@ func runInit(args []string) error {
 		".fabric/skills/preflight",
 		".fabric/skills/sync",
 		".fabric/skills/note",
+		".fabric/skills/continue",
+		".fabric/skills/challenge",
 	}
 	for _, dir := range dirs {
 		if err := mkdirAll(dir); err != nil {
@@ -89,6 +95,8 @@ func runInit(args []string) error {
 		{path: ".fabric/skills/preflight/SKILL.md", content: preflightSkill()},
 		{path: ".fabric/skills/sync/SKILL.md", content: syncSkill()},
 		{path: ".fabric/skills/note/SKILL.md", content: noteSkill()},
+		{path: ".fabric/skills/continue/SKILL.md", content: continueSkill()},
+		{path: ".fabric/skills/challenge/SKILL.md", content: challengeSkill()},
 		{path: agentsPath, content: agentsSnippet()},
 	}
 	for _, file := range files {
@@ -121,6 +129,7 @@ func runThread(args []string) error {
 	fs.SetOutput(os.Stderr)
 	id := fs.String("id", "", "thread id")
 	issue := fs.String("issue", "", "issue key")
+	pr := fs.String("pr", "", "pull request number")
 	areas := stringListFlag{}
 	fs.Var(&areas, "area", "area, repeatable")
 	if err := fs.Parse(args[1:]); err != nil {
@@ -129,19 +138,20 @@ func runThread(args []string) error {
 	if *id == "" {
 		*id = "thread_" + time.Now().Format("20060102_1504")
 	}
-	if *issue == "" && len(areas) == 0 {
-		return errors.New("thread start requires --issue or --area")
+	if *issue == "" && *pr == "" && len(areas) == 0 {
+		return errors.New("thread start requires --issue, --pr, or --area")
 	}
 
 	events, err := loadEvents()
 	if err != nil {
 		return err
 	}
-	lastSeen := latestRelevantEventID(events, *issue, areas)
+	lastSeen := latestRelevantEventIDForScope(events, *issue, *pr, areas)
 	record := ThreadRecord{
 		ThreadID:        *id,
 		CreatedAt:       nowString(),
 		Issue:           *issue,
+		PR:              *pr,
 		Areas:           areas,
 		LastSeenEventID: lastSeen,
 	}
@@ -149,7 +159,7 @@ func runThread(args []string) error {
 		return err
 	}
 
-	fmt.Printf("Started thread %s for issue %s, area %s.\n", *id, emptyAsNone(*issue), areas.StringOrNone())
+	fmt.Printf("Started thread %s for issue %s, PR %s, area %s.\n", *id, emptyAsNone(*issue), emptyAsNone(*pr), areas.StringOrNone())
 	fmt.Printf("Last seen event: %s.\n", emptyAsNone(lastSeen))
 	return nil
 }
@@ -265,7 +275,7 @@ func runSync(args []string) error {
 	if err != nil {
 		return err
 	}
-	matches := relevantEventsSince(events, thread.Issue, thread.Areas, thread.LastSeenEventID)
+	matches := relevantEventsSinceForScope(events, thread.Issue, thread.PR, thread.Areas, thread.LastSeenEventID)
 	if len(matches) == 0 {
 		if err := writeFile(syncPath, noSyncMarkdown(*threadID)); err != nil {
 			return err
@@ -273,7 +283,7 @@ func runSync(args []string) error {
 		fmt.Printf("No new relevant direction for %s.\n", *threadID)
 		return nil
 	}
-	capped, omitted := capEventsByBudget(matches, *budget)
+	capped, omitted := capEventsByBudget(prioritizedEvents(matches, thread.Issue, thread.PR, thread.Areas), *budget)
 
 	markdown := syncMarkdown(thread, capped, omitted)
 	if err := writeFile(syncPath, markdown); err != nil {
@@ -304,7 +314,7 @@ func runPreflight(args []string) error {
 	if err != nil {
 		return err
 	}
-	capped, omitted := capEventsByBudget(relevantEvents(events, issue, areas), budget)
+	capped, omitted := capEventsByBudget(prioritizedEvents(relevantEvents(events, issue, areas), issue, "", areas), budget)
 	markdown := preflightMarkdown(task, issue, areas, capped, omitted)
 	if err := writeFile(taskPath, markdown); err != nil {
 		return err

@@ -32,7 +32,7 @@ func runContinue(args []string) error {
 	}
 	resolvedIssue, resolvedAreas := inferScopeFromPR(events, *pr, *issue, areas)
 	matches := relevantEventsForScope(events, resolvedIssue, *pr, resolvedAreas)
-	capped, omitted := capEventsByBudget(continuationEventOrder(matches), *budget)
+	capped, omitted := capEventsByBudget(prioritizedEvents(matches, resolvedIssue, *pr, resolvedAreas), *budget)
 	markdown := continuationMarkdown(resolvedIssue, *pr, capped, omitted)
 	if err := writeFile(continuePath, markdown); err != nil {
 		return err
@@ -80,21 +80,6 @@ func inferScopeFromPR(events []DirectionEvent, pr, issue string, areas []string)
 		}
 	}
 	return resolvedIssue, resolvedAreas
-}
-
-func continuationEventOrder(events []DirectionEvent) []DirectionEvent {
-	ordered := make([]DirectionEvent, 0, len(events))
-	for _, event := range events {
-		if event.Kind == "review_direction" {
-			ordered = append(ordered, event)
-		}
-	}
-	for _, event := range events {
-		if event.Kind != "review_direction" {
-			ordered = append(ordered, event)
-		}
-	}
-	return ordered
 }
 
 func latestEventID(events []DirectionEvent) string {

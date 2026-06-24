@@ -65,3 +65,24 @@ func TestExplainPRShowsReviewDirection(t *testing.T) {
 	assertContains(t, output, "Source:\nreview")
 	assertContains(t, output, "Stale:\n- thread-review-fix")
 }
+
+func TestSyncSeesPRScopedReviewDirection(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-pr", "--pr", "123")
+	mustRun(t, "review", "note", "--pr", "123", "PR-only review direction")
+	mustRun(t, "sync", "--thread", "thread-pr")
+
+	syncDelta := mustRead(t, syncPath)
+	assertContains(t, syncDelta, "PR-only review direction")
+	assertContains(t, syncDelta, "- Same PR: 123")
+
+	threads, err := loadThreads()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := threads["thread-pr"].LastSeenEventID; got != "evt_000001" {
+		t.Fatalf("thread-pr last seen = %q, want evt_000001", got)
+	}
+}

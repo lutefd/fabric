@@ -33,7 +33,10 @@ func TestInitIsIdempotentAndWritesTemplates(t *testing.T) {
 	assertContains(t, mustRead(t, ".fabric/skills/preflight/SKILL.md"), "Fabric Preflight")
 	assertContains(t, mustRead(t, ".fabric/skills/sync/SKILL.md"), "Fabric Sync")
 	assertContains(t, mustRead(t, ".fabric/skills/note/SKILL.md"), "Fabric Note")
+	assertContains(t, mustRead(t, ".fabric/skills/continue/SKILL.md"), "Fabric Continue")
+	assertContains(t, mustRead(t, ".fabric/skills/challenge/SKILL.md"), "Fabric Challenge")
 	assertContains(t, mustRead(t, agentsPath), "fabric sync")
+	assertContains(t, mustRead(t, agentsPath), "fabric challenge")
 
 	if err := runInit([]string{"--bad"}); err == nil {
 		t.Fatal("runInit accepted an unknown flag")
@@ -55,15 +58,22 @@ func TestThreadStartValidationGeneratedIDAndLastSeen(t *testing.T) {
 	}
 	mustRun(t, "note", "--global", "Global direction")
 	mustRun(t, "thread", "start", "--issue", "VS-123")
+	mustRun(t, "thread", "start", "--id", "thread-pr", "--pr", "123")
 
 	threads, err := loadThreads()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(threads) != 1 {
-		t.Fatalf("threads count = %d, want 1", len(threads))
+	if len(threads) != 2 {
+		t.Fatalf("threads count = %d, want 2", len(threads))
 	}
 	for id, thread := range threads {
+		if id == "thread-pr" {
+			if thread.PR != "123" {
+				t.Fatalf("thread-pr PR = %q, want 123", thread.PR)
+			}
+			continue
+		}
 		if !strings.HasPrefix(id, "thread_") {
 			t.Fatalf("generated id = %q, want thread_ prefix", id)
 		}

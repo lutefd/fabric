@@ -53,6 +53,15 @@ func assertNotContains(t *testing.T, haystack, needle string) {
 	}
 }
 
+func assertOrder(t *testing.T, haystack, before, after string) {
+	t.Helper()
+	beforeIndex := strings.Index(haystack, before)
+	afterIndex := strings.Index(haystack, after)
+	if beforeIndex == -1 || afterIndex == -1 || beforeIndex >= afterIndex {
+		t.Fatalf("expected %q to appear before %q in %q", before, after, haystack)
+	}
+}
+
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
 	old := os.Stdout

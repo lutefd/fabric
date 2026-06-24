@@ -9,6 +9,8 @@ type DirectionEvent struct {
 	Text       string      `json:"text"`
 	Confidence string      `json:"confidence"`
 	TTL        string      `json:"ttl"`
+	Challenges string      `json:"challenges,omitempty"`
+	Status     string      `json:"status,omitempty"`
 }
 
 type EventScope struct {

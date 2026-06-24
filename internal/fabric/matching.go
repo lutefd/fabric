@@ -3,7 +3,11 @@ package fabric
 import "sort"
 
 func latestRelevantEventID(events []DirectionEvent, issue string, areas []string) string {
-	matches := relevantEventsForScope(events, issue, "", areas)
+	return latestRelevantEventIDForScope(events, issue, "", areas)
+}
+
+func latestRelevantEventIDForScope(events []DirectionEvent, issue, pr string, areas []string) string {
+	matches := relevantEventsForScope(events, issue, pr, areas)
 	if len(matches) == 0 {
 		return ""
 	}
@@ -24,10 +28,10 @@ func relevantEventsForScope(events []DirectionEvent, issue, pr string, areas []s
 	return matches
 }
 
-func relevantEventsSince(events []DirectionEvent, issue string, areas []string, lastSeen string) []DirectionEvent {
+func relevantEventsSinceForScope(events []DirectionEvent, issue, pr string, areas []string, lastSeen string) []DirectionEvent {
 	var matches []DirectionEvent
 	lastSeenNumber := eventNumber(lastSeen)
-	for _, event := range relevantEvents(events, issue, areas) {
+	for _, event := range relevantEventsForScope(events, issue, pr, areas) {
 		if eventNumber(event.ID) > lastSeenNumber {
 			matches = append(matches, event)
 		}
@@ -71,10 +75,6 @@ func seenAndStale(event DirectionEvent, threads map[string]ThreadRecord) ([]stri
 	return seen, stale
 }
 
-func reasonFor(event DirectionEvent, issue string, areas []string) matchReason {
-	return reasonForScope(event, issue, "", areas)
-}
-
 func reasonForScope(event DirectionEvent, issue, pr string, areas []string) matchReason {
 	reason := matchReason{Global: event.Scope.Global}
 	if event.Scope.Issue != "" && issue != "" && event.Scope.Issue == issue {
@@ -95,4 +95,61 @@ func reasonForScope(event DirectionEvent, issue, pr string, areas []string) matc
 
 func (m matchReason) matched() bool {
 	return m.Global || m.Issue || m.PR || len(m.Areas) > 0
+}
+
+func prioritizedEvents(events []DirectionEvent, issue, pr string, areas []string) []DirectionEvent {
+	resolutions := map[string]DirectionEvent{}
+	for _, event := range events {
+		if event.Kind == "challenge_resolution" && event.Challenges != "" {
+			resolutions[event.Challenges] = event
+		}
+	}
+	ordered := append([]DirectionEvent(nil), events...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		left := eventPriority(ordered[i], issue, pr, areas, resolutions)
+		right := eventPriority(ordered[j], issue, pr, areas, resolutions)
+		if left != right {
+			return left < right
+		}
+		return eventNumber(ordered[i].ID) < eventNumber(ordered[j].ID)
+	})
+	return ordered
+}
+
+func eventPriority(event DirectionEvent, issue, pr string, areas []string, resolutions map[string]DirectionEvent) int {
+	if isOpenChallenge(event, resolutions) {
+		reason := reasonForScope(event, issue, pr, areas)
+		if reason.PR {
+			return 1
+		}
+		if reason.Issue {
+			return 2
+		}
+		return 3
+	}
+	if event.Kind == "review_direction" {
+		return 4
+	}
+	return 5
+}
+
+func isOpenChallenge(event DirectionEvent, resolutions map[string]DirectionEvent) bool {
+	if event.Kind != "challenge" {
+		return false
+	}
+	if event.Status != "" && event.Status != "open" {
+		return false
+	}
+	_, resolved := resolutions[event.ID]
+	return !resolved
+}
+
+func challengeResolution(events []DirectionEvent, challengeID string) (DirectionEvent, bool) {
+	var latest DirectionEvent
+	for _, event := range events {
+		if event.Kind == "challenge_resolution" && event.Challenges == challengeID {
+			latest = event
+		}
+	}
+	return latest, latest.ID != ""
 }

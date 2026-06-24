@@ -19,6 +19,7 @@ generated:
   task_direction: ".fabric/generated/TASK_DIRECTION.md"
   sync_delta: ".fabric/generated/SYNC_DELTA.md"
   continuation_context: ".fabric/generated/CONTINUATION_CONTEXT.md"
+  challenge: ".fabric/generated/CHALLENGE.md"
 `, repo)
 }
 
@@ -40,6 +41,20 @@ func noteSkill() string {
 	return `# Direction Fabric Note
 
 When the human gives project direction, record it with fabric note using the current thread, issue, and area.
+`
+}
+
+func continueSkill() string {
+	return `# Direction Fabric Continue
+
+When continuing PR, review, issue, or area work in a fresh thread, run fabric continue, then read .fabric/generated/CONTINUATION_CONTEXT.md.
+`
+}
+
+func challengeSkill() string {
+	return `# Direction Fabric Challenge
+
+If planned work conflicts with active direction, record the explicit dispute with fabric challenge, then read .fabric/generated/CHALLENGE.md.
 `
 }
 
@@ -78,6 +93,30 @@ Read:
 
 .fabric/generated/CONTINUATION_CONTEXT.md
 
-Do not silently ignore active direction. If your planned approach conflicts with direction, stop and ask whether to align, request an exception, or challenge the direction.
+## Challenging direction
+
+If your planned approach conflicts with active direction, do not silently proceed.
+
+Choose one:
+
+1. Align with existing direction
+2. Ask for a scoped exception
+3. Record a challenge
+
+To record a challenge, run:
+
+fabric challenge \
+  --direction "<event-id>" \
+  --issue "<issue>" \
+  --pr "<pr>" \
+  --area "<area>" \
+  --proposal "<new proposed path>" \
+  --reason "<why the existing direction may not apply>"
+
+Read:
+
+.fabric/generated/CHALLENGE.md
+
+Mention the challenge in the PR or handoff.
 `
 }
