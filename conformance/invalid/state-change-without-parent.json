@@ -1,0 +1,12 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_0197f552-0abe-7def-8123-123456789abc",
+  "event_type": "record.state_changed",
+  "occurred_at": "2026-06-24T18:02:00Z",
+  "actor": {"kind": "human"},
+  "trust": {"level": "human_confirmed"},
+  "payload": {
+    "record_id": "rec_0197f552-0abc-7def-8123-123456789abc",
+    "status": "expired"
+  }
+}

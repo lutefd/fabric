@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/actor.schema.json",
+  "title": "Fabric Actor",
+  "type": "object",
+  "required": ["kind"],
+  "properties": {
+    "kind": {"enum": ["human", "reviewer", "agent", "tool"]},
+    "id": {"type": "string"},
+    "provider": {"type": "string"}
+  },
+  "additionalProperties": false
+}

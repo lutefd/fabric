@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/thread.schema.json",
+  "title": "Fabric Thread",
+  "type": "object",
+  "required": ["thread_id", "created_at", "updated_at", "scope"],
+  "properties": {
+    "thread_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "scope": {"$ref": "scope.schema.json"}
+  },
+  "additionalProperties": false
+}

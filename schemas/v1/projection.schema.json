@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/projection.schema.json",
+  "title": "Fabric Projection",
+  "type": "object",
+  "required": ["projection_id", "purpose", "created_at", "scope", "event_ids", "record_ids", "omitted"],
+  "properties": {
+    "projection_id": {"type": "string", "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "thread_id": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "scope": {"$ref": "scope.schema.json"},
+    "event_ids": {"type": "array", "items": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}, "uniqueItems": true},
+    "record_ids": {"type": "array", "items": {"type": "string", "pattern": "^rec_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}, "uniqueItems": true},
+    "reasons": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {"kind": {"type": "string", "minLength": 1}, "value": {"type": "string"}},
+          "additionalProperties": false
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["record_id", "parent_event_id", "competing_event_ids", "message"],
+        "properties": {
+          "record_id": {"type": "string", "pattern": "^rec_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+          "parent_event_id": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+          "competing_event_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}},
+          "message": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "omitted": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

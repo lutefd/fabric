@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/receipt.schema.json",
+  "title": "Fabric Receipt",
+  "type": "object",
+  "required": ["receipt_id", "projection_id", "thread_id", "state", "occurred_at", "event_ids", "record_ids"],
+  "properties": {
+    "receipt_id": {"type": "string", "pattern": "^rcp_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "projection_id": {"type": "string", "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "thread_id": {"type": "string", "minLength": 1},
+    "state": {"enum": ["delivered", "exposed"]},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "event_ids": {"type": "array", "items": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}, "uniqueItems": true},
+    "record_ids": {"type": "array", "items": {"type": "string", "pattern": "^rec_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}, "uniqueItems": true},
+    "provider": {"type": "string"}
+  },
+  "additionalProperties": false
+}

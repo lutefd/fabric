@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/event.schema.json",
+  "title": "Fabric Event Envelope",
+  "type": "object",
+  "required": ["schema_version", "event_id", "event_type", "occurred_at", "actor", "trust", "payload"],
+  "properties": {
+    "schema_version": {"const": "fabric/1.0"},
+    "event_id": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "event_type": {"enum": ["record.created", "record.state_changed", "relation.created", "thread.started", "thread.scope_changed", "projection.created", "receipt.recorded"]},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "actor": {"$ref": "actor.schema.json"},
+    "trust": {
+      "type": "object",
+      "required": ["level"],
+      "properties": {"level": {"type": "string", "minLength": 1}, "basis": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "parent_event_id": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "causation_id": {"type": "string"},
+    "correlation_id": {"type": "string"},
+    "payload": {"type": "object"},
+    "extensions": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"event_type": {"const": "record.created"}}},
+      "then": {"properties": {"payload": {"type": "object", "required": ["record"], "properties": {"record": {"$ref": "record.schema.json"}}, "additionalProperties": false}}}
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "record.state_changed"}}},
+      "then": {
+        "required": ["parent_event_id"],
+        "properties": {"payload": {
+          "type": "object",
+          "required": ["record_id"],
+          "properties": {
+            "record_id": {"type": "string", "pattern": "^rec_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+            "status": {"enum": ["active", "expired", "discarded", "superseded", "open", "accepted", "rejected"]},
+            "durability": {"enum": ["live", "candidate", "durable"]},
+            "lifecycle_reason": {"type": "string"},
+            "reviewed_at": {"type": "string", "format": "date-time"}
+          },
+          "anyOf": [
+            {"required": ["status"]},
+            {"required": ["durability"]},
+            {"required": ["lifecycle_reason"]},
+            {"required": ["reviewed_at"]}
+          ],
+          "additionalProperties": false
+        }}
+      }
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "relation.created"}}},
+      "then": {"properties": {"payload": {"type": "object", "required": ["relation"], "properties": {"relation": {"$ref": "relation.schema.json"}}, "additionalProperties": false}}}
+    },
+    {
+      "if": {"properties": {"event_type": {"enum": ["thread.started", "thread.scope_changed"]}}},
+      "then": {"properties": {"payload": {"type": "object", "required": ["thread"], "properties": {"thread": {"$ref": "thread.schema.json"}}, "additionalProperties": false}}}
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "projection.created"}}},
+      "then": {"properties": {"payload": {"type": "object", "required": ["projection"], "properties": {"projection": {"$ref": "projection.schema.json"}}, "additionalProperties": false}}}
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "receipt.recorded"}}},
+      "then": {"properties": {"payload": {"type": "object", "required": ["receipt"], "properties": {"receipt": {"$ref": "receipt.schema.json"}}, "additionalProperties": false}}}
+    }
+  ],
+  "additionalProperties": false
+}

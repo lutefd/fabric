@@ -1,0 +1,23 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_0197f552-0abc-7def-8123-123456789abc",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:00:00Z",
+  "actor": {"kind": "human", "id": "local-user"},
+  "trust": {"level": "human_confirmed", "basis": "interactive direction"},
+  "payload": {
+    "record": {
+      "record_id": "rec_0197f552-0abc-7def-8123-123456789abc",
+      "kind": "decision",
+      "created_at": "2026-06-24T18:00:00Z",
+      "scope": {"repo": "fabric", "areas": ["agent-protocol"]},
+      "source": {"type": "human"},
+      "text": "Use immutable protocol events.",
+      "confidence": "human_confirmed",
+      "ttl": "until_superseded",
+      "status": "active",
+      "durability": "durable",
+      "reason": "Threads must observe lifecycle changes."
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/record.schema.json",
+  "title": "Fabric Record",
+  "type": "object",
+  "required": ["record_id", "kind", "created_at", "scope", "source", "text", "confidence", "ttl", "status", "durability"],
+  "properties": {
+    "record_id": {"type": "string", "pattern": "^rec_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "kind": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "scope": {"$ref": "scope.schema.json"},
+    "source": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string", "minLength": 1},
+        "thread_id": {"type": "string"},
+        "pr": {"type": "string"},
+        "url": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "text": {"type": "string", "minLength": 1},
+    "confidence": {"type": "string", "minLength": 1},
+    "ttl": {"type": "string", "minLength": 1},
+    "status": {"enum": ["active", "expired", "discarded", "superseded", "open", "accepted", "rejected"]},
+    "durability": {"enum": ["live", "candidate", "durable"]},
+    "review_type": {"type": "string"},
+    "reason": {"type": "string"},
+    "rejected_paths": {"type": "array", "items": {"type": "string"}},
+    "preferred_paths": {"type": "array", "items": {"type": "string"}},
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {"type": "string"},
+          "url": {"type": "string"},
+          "author": {"type": "string"},
+          "text": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "lifecycle_reason": {"type": "string"},
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "extensions": {"type": "object"}
+  },
+  "additionalProperties": false
+}

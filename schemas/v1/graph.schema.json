@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/graph.schema.json",
+  "title": "Fabric Explanation Graph",
+  "type": "object",
+  "required": ["root", "nodes", "relations"],
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "id": {"type": "string", "minLength": 1},
+        "provider": {"type": "string"},
+        "url": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "root": {"$ref": "#/$defs/node"},
+    "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}},
+    "node_details": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ref"],
+        "properties": {
+          "ref": {"$ref": "#/$defs/node"},
+          "record": {
+            "type": "object",
+            "required": ["record", "head_event_id", "actor", "trust", "head_actor", "head_trust"],
+            "properties": {
+              "record": {"$ref": "record.schema.json"},
+              "head_event_id": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "actor": {"$ref": "actor.schema.json"},
+              "trust": {"type": "object", "required": ["level"], "properties": {"level": {"type": "string"}, "basis": {"type": "string"}}, "additionalProperties": false},
+              "head_actor": {"$ref": "actor.schema.json"},
+              "head_trust": {"type": "object", "required": ["level"], "properties": {"level": {"type": "string"}, "basis": {"type": "string"}}, "additionalProperties": false},
+              "conflict": {"$ref": "projection.schema.json#/properties/conflicts/items"}
+            },
+            "additionalProperties": false
+          },
+          "projection": {"$ref": "projection.schema.json"},
+          "thread": {"$ref": "thread.schema.json"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "relations": {"type": "array", "items": {"$ref": "relation.schema.json"}},
+    "relation_details": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["relation_id", "event_id", "actor", "trust"],
+        "properties": {
+          "relation_id": {"type": "string", "pattern": "^rel_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+          "event_id": {"type": "string", "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+          "actor": {"$ref": "actor.schema.json"},
+          "trust": {"type": "object", "required": ["level"], "properties": {"level": {"type": "string"}, "basis": {"type": "string"}}, "additionalProperties": false}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

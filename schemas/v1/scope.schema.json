@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabric.local/schemas/v1/scope.schema.json",
+  "title": "Fabric Scope",
+  "type": "object",
+  "properties": {
+    "repo": {"type": "string", "minLength": 1},
+    "issue": {"type": "string", "minLength": 1},
+    "pr": {"type": "string", "minLength": 1},
+    "areas": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true, "minItems": 1},
+    "paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true, "minItems": 1},
+    "global": {"type": "boolean"}
+  },
+  "anyOf": [
+    {"required": ["issue"]},
+    {"required": ["pr"]},
+    {"required": ["areas"]},
+    {"required": ["paths"]},
+    {"properties": {"global": {"const": true}}, "required": ["global"]}
+  ],
+  "additionalProperties": false
+}

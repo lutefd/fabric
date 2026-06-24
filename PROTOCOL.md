@@ -1,561 +1,484 @@
-# Direction Fabric Protocol
+# Fabric Protocol 1.0
 
-Status: Draft 0.1  
-Reference implementation: `fabric` CLI
+Status: Draft Local V1
+Schema version: `fabric/1.0`
+Reference client: `fabric`
 
-Direction Fabric is a provider-neutral protocol for sharing repository decisions,
-findings, and constraints across agent threads and worktrees. It defines how an
-agent discovers applicable direction, publishes new knowledge, synchronizes with
-other work, records disagreement, and explains why a later action was taken.
+Fabric is a provider-neutral protocol for persistent repository decisions and
+causal provenance across agent threads, worktrees, and tools. The protocol is
+the product boundary. The CLI in this repository is one local reference client.
 
-The CLI in this repository is the reference protocol client. It is not the
-protocol boundary. Codex, Claude, Cursor, CI jobs, IDEs, and future tools can all
-participate as clients if they implement the behavior described here.
+The words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are normative.
 
-This document has two purposes:
+## 1. Why This Protocol Exists
 
-1. Specify the interoperable profile implemented by Fabric today.
-2. Establish the compatibility boundary for richer provenance and first-party
-   provider integrations without pretending those extensions already exist.
+Repository work now happens in several disposable contexts at once. A human can
+correct one agent while another worktree continues with the rejected assumption.
+A reviewer can explain why an implementation belongs in a shared layer, then a
+new thread can reopen the discarded path because it sees only the code. A useful
+finding can be rediscovered repeatedly because it never leaves its originating
+conversation.
 
-The words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** describe
-protocol requirements.
+Transcripts are not repository memory. They are provider-owned, verbose,
+privacy-sensitive, and poor at identifying the few facts that should change
+future work. Git records the resulting code but usually not the causal chain
+behind it.
 
-## 1. Problem Statement
+Fabric represents that missing layer as small immutable events. It can answer
+two different questions without confusing them:
 
-Repository work increasingly happens in several short-lived agent contexts at
-once. Those contexts do not share a reliable memory:
+1. What repository direction was available to this thread?
+2. Which direction did the agent explicitly declare as influencing this action?
 
-- A human corrects one thread, but a sibling worktree continues with the old
-  assumption.
-- A review rejects an approach, but the next agent reopens it because the reason
-  lived only in a PR conversation.
-- One thread discovers a repository constraint, while another spends time
-  rediscovering it.
-- A later user can inspect what an agent changed, but not which earlier decision,
-  finding, or human instruction caused that choice.
-
-Larger prompts and transcript archives do not solve this. They move more text,
-not necessarily the small set of facts that should change future behavior.
-Fabric therefore treats repository memory as curated protocol state rather than
-conversation history.
+That distinction is essential. Context delivery is evidence of availability,
+not proof of causal influence.
 
 ## 2. Goals
 
-Fabric has six protocol goals:
+Fabric provides:
 
-1. **Propagation:** relevant knowledge from one thread becomes available to
-   other threads and worktrees before they act.
-2. **Selection:** clients receive a scoped, budgeted context projection rather
-   than the entire repository history.
-3. **Persistence:** reusable project decisions survive disposable conversations.
-4. **Provenance:** records preserve enough source, evidence, and rationale to
-   explain why guidance exists.
-5. **Conflict visibility:** an agent never silently violates active direction;
-   disagreement becomes explicit protocol state.
-6. **Provider independence:** repository knowledge remains usable across agent
-   vendors, IDEs, and hosting platforms.
+- Immediate propagation of relevant direction between sibling worktrees.
+- Curated repository memory that survives disposable agent conversations.
+- Deterministic, budgeted context projection without an LLM or embedding call.
+- Explicit lifecycle conflicts instead of last-writer-wins mutation.
+- Provider-neutral references to messages, actions, commits, issues, and PRs.
+- Traversable provenance from an action back to records, evidence, and humans.
+- A local Git-backed mode requiring no account, service, daemon, or network.
 
 ## 3. Non-goals
 
-The protocol is not:
+Fabric is not:
 
-- A transcript or prompt archive.
-- A replacement for Git, issue trackers, or code review systems.
-- A database of every fact an agent observed.
-- An autonomous policy engine that resolves disagreement without humans.
-- A provider-specific memory feature.
-- A requirement for a hosted service, daemon, or LLM call.
+- A prompt, transcript, source-code, or patch archive.
+- A replacement for Git, issue trackers, or code review.
+- A database of everything an agent observed.
+- A policy engine that silently resolves conflicting human direction.
+- A GitHub wrapper or a provider-specific memory feature.
+- Dependent on the future service described in [SERVICE.md](SERVICE.md).
 
-External systems remain evidence sources and publication targets. Provider
-adapters acquire context from those systems; the core protocol stores only the
-curated records needed by future repository work.
+## 4. Conformance Boundary
 
-## 4. Protocol Model
+The normative wire artifacts are:
 
-Fabric separates five concepts.
+- The event envelope and payload rules in this document.
+- JSON Schemas in `schemas/v1/`.
+- Valid and invalid fixtures in `conformance/`.
+- The machine response envelope in section 14.
 
-### 4.1 Repository
+Generated Markdown files are human views, not authoritative state. CLI command
+names are reference operations, not required API names for other clients.
 
-A repository is the ownership and portability boundary for Fabric state. Durable
-records travel with the repository through Git. Active worktrees in the same Git
-repository also share an uncommitted runtime mirror.
+## 5. Identifiers and Time
 
-### 4.2 Thread
+New identifiers MUST use UUIDv7 values with a type prefix:
 
-A thread is one agent execution context. It has:
-
-- A stable `thread_id`.
-- A scope containing an issue, PR, and/or one or more repository areas.
-- A cursor identifying the latest relevant event it has consumed.
-
-A thread may correspond to a chat, an IDE task, a background agent, or another
-provider-specific session. Provider identifiers MAY be used as `thread_id`
-values, but the protocol does not require a particular provider.
-
-### 4.3 Record
-
-A record is a small, scoped statement that can change future work or explain a
-past choice. The current storage representation calls records **direction
-events**.
-
-The useful semantic classes are:
-
-- **Direction:** a constraint or instruction future work should follow.
-- **Finding:** an observation another thread should not need to rediscover.
-- **Decision:** a chosen path, including rationale and rejected alternatives.
-- **Requirement:** a scoped condition that must be satisfied.
-- **Challenge:** an explicit proposal to depart from active direction.
-- **Resolution:** the accepted or rejected outcome of a challenge.
-
-The 0.1 implementation uses the open `kind` field. It currently emits `note`,
-`review_direction`, `review_requirement`, `challenge`, and
-`challenge_resolution`. Clients MAY emit more specific kinds such as `finding`
-and `decision`; 0.1 readers treat unknown kinds as ordinary scoped records.
-
-### 4.4 Evidence
-
-Evidence identifies the material that supports a record: a PR comment, issue,
-human note, test result, document, commit, or other source. Evidence is not a
-copy of the full source. It is a compact reference with enough context to audit
-the record.
-
-### 4.5 Context Projection
-
-A context projection is a generated, bounded view of relevant active records for
-one task or thread. `TASK_DIRECTION.md`, `SYNC_DELTA.md`,
-`CONTINUATION_CONTEXT.md`, and `HANDOFF.md` are projection formats, not
-authoritative state.
-
-## 5. Direction Event Schema
-
-The 0.1 interoperable representation is one JSON object per line.
-
-```json
-{
-  "id": "evt_000015",
-  "kind": "decision",
-  "created_at": "2026-06-24T17:55:11-03:00",
-  "scope": {
-    "repo": "fabric",
-    "issue": "FAB-5",
-    "pr": "12",
-    "areas": ["agent-protocol"],
-    "global": false
-  },
-  "source": {
-    "type": "human",
-    "thread_id": "thread_20260624_1755",
-    "pr": "12",
-    "url": "https://example.test/pull/12#discussion"
-  },
-  "text": "Keep Fabric provider-neutral; integrations adapt providers to the protocol.",
-  "confidence": "human_confirmed",
-  "ttl": "until_issue_closed",
-  "status": "active",
-  "durability": "durable",
-  "reason": "Repository decisions must survive movement between agent providers.",
-  "rejected_paths": ["Make the ledger a Codex-only memory store"],
-  "preferred_paths": ["Keep provider behavior in adapters and skills"],
-  "evidence": [
-    {
-      "type": "thread_message",
-      "url": "https://example.test/threads/abc/messages/42",
-      "author": "human",
-      "text": "Provider integrations should use a shared protocol."
-    }
-  ]
-}
-```
-
-### 5.1 Required fields
-
-| Field | Requirement |
-|---|---|
-| `id` | Stable repository-local event identifier. Current form is `evt_NNNNNN`. |
-| `kind` | Semantic record kind. Unknown kinds MUST NOT make a record unreadable. |
-| `created_at` | RFC 3339 timestamp with offset. |
-| `scope` | Object defining where the record applies. |
-| `source` | Object identifying how the record entered Fabric. |
-| `text` | Smallest complete actionable statement. |
-| `confidence` | Basis for trusting the statement. |
-| `ttl` | Intended validity window. |
-| `durability` | `live`, `candidate`, or `durable`. |
-
-`status` SHOULD be written explicitly. A missing `status` is interpreted as
-`active`. For compatibility with early ledgers, a missing `durability` is
-interpreted as `durable`.
-
-### 5.2 Scope
-
-The scope object supports:
-
-| Field | Meaning |
-|---|---|
-| `repo` | Repository name. |
-| `issue` | Issue key or identifier. |
-| `pr` | Pull request identifier. |
-| `areas` | Exact repository-owned area labels. |
-| `global` | Whether the record applies to every thread in the repository. |
-
-A record MUST contain at least one useful scope dimension. Global records SHOULD
-be rare because they consume every thread's context budget.
-
-The 0.1 matching rule is an OR across dimensions. A record is relevant when it
-is global, has the same non-empty issue, has the same non-empty PR, or shares at
-least one exact non-empty area.
-
-Area matching is exact in 0.1. Hierarchical or fuzzy area matching requires a
-future protocol version or an explicit repository convention.
-
-### 5.3 Source
-
-The source object supports:
-
-| Field | Meaning |
-|---|---|
-| `type` | Origin class such as `human`, `review`, or `pr_ingest`. |
-| `thread_id` | Thread that created the record. |
-| `pr` | Source PR when applicable. |
-| `url` | Stable external source URL when available. |
-
-Clients SHOULD preserve a source URL for externally acquired records and a
-thread ID for thread-originated records. A source reference is provenance, not
-proof by itself; evidence and rationale provide the rest of the explanation.
-
-### 5.4 Optional explanation fields
-
-| Field | Meaning |
-|---|---|
-| `reason` | Why the direction, finding, or decision matters. |
-| `review_type` | Review classification such as rejection, preference, or requirement. |
-| `rejected_paths` | Approaches future agents should not reopen without new evidence. |
-| `preferred_paths` | Recommended approaches. |
-| `evidence` | Compact evidence references. |
-| `challenges` | Event ID challenged by this record. |
-| `lifecycle_reason` | Why a curator promoted, expired, discarded, or retained the record. |
-| `reviewed_at` | RFC 3339 time of the latest lifecycle review. |
-
-Clients SHOULD include rationale whenever a bare instruction would cause a later
-agent to repeat the original investigation.
-
-### 5.5 Confidence
-
-Confidence describes provenance, not a numerical probability. Current standard
-values are:
-
-- `human_confirmed`: directly established by a human.
-- `reviewer_confirmed`: extracted from explicit review feedback.
-
-Future clients MAY add values such as `agent_observed` or `tool_verified`.
-Unknown confidence values MUST remain readable. Agent-generated findings SHOULD
-include evidence and SHOULD default to candidate durability until reviewed.
-
-## 6. Durability, Status, and TTL
-
-These are independent dimensions.
-
-### 6.1 Durability
-
-| Value | Semantics | Storage requirement |
+| Object | Prefix | Example |
 |---|---|---|
-| `live` | Temporary coordination for active work. | Shared runtime mirror; not required in Git. |
-| `candidate` | Potentially reusable, awaiting curation. | Durable ledger and shared mirror. |
-| `durable` | Reviewed repository knowledge. | Durable ledger and shared mirror. |
+| Event | `evt_` | `evt_019efb89-8d67-746d-bc08-fde2c0be3053` |
+| Record | `rec_` | `rec_019efb89-8d67-746d-bc08-fde2c0be3053` |
+| Thread | `thr_` | `thr_019efb89-8d67-746d-bc08-fde2c0be3053` |
+| Projection | `prj_` | `prj_019efb89-8d67-746d-bc08-fde2c0be3053` |
+| Relation | `rel_` | `rel_019efb89-8d67-746d-bc08-fde2c0be3053` |
 
-Agents SHOULD default uncertain reusable knowledge to `candidate`. They MUST NOT
-promote every conversation, review comment, or local task detail to `durable`.
+Receipt identifiers use `rcp_` in the reference client. External node
+identifiers remain provider-owned opaque strings.
 
-### 6.2 Status
+IDs provide identity and stable ordering only when an operation explicitly
+defines it. Clients MUST NOT use an ID, timestamp, or lexical position as a
+synchronization cursor. Delivery state is a set of receipts.
 
-| Value | Semantics |
-|---|---|
-| `active` | Eligible for ordinary context projections. |
-| `expired` | Validity window ended. |
-| `discarded` | Noisy, incorrect, or not useful as repository direction. |
-| `superseded` | Replaced by newer direction. |
+All timestamps MUST be RFC 3339. Clients SHOULD preserve offsets when supplied.
 
-Challenge records additionally use `open`, `accepted`, and `rejected` in the
-0.1 implementation. Ordinary projections MUST exclude inactive records unless
-the caller explicitly asks to inspect or consolidate them.
+## 6. Event Envelope
 
-### 6.3 TTL
-
-`ttl` communicates expected validity, for example `until_issue_closed`,
-`until_pr_closed`, or `until_challenge_resolved`. In 0.1, TTL is advisory:
-clients and humans perform explicit lifecycle transitions. A client MUST NOT
-silently delete a record because its TTL appears to have elapsed.
-
-## 7. Thread State
-
-Thread state uses JSONL records with this shape:
+Every protocol mutation is an immutable `EventEnvelope` stored as one JSON
+object:
 
 ```json
 {
-  "thread_id": "thread-a",
-  "created_at": "2026-06-24T18:00:00-03:00",
-  "issue": "FAB-5",
-  "pr": "12",
-  "areas": ["agent-protocol"],
-  "last_seen_event_id": "evt_000015"
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb89-8d67-746d-bc08-fde2c0be3053",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:28:29.096313-03:00",
+  "actor": { "kind": "human", "id": "provider-thread-id" },
+  "trust": { "level": "human_confirmed", "basis": "human" },
+  "parent_event_id": "evt_optional-causal-parent",
+  "causation_id": "provider-action-id",
+  "correlation_id": "task-or-operation-id",
+  "payload": {},
+  "extensions": {}
 }
 ```
 
-The latest record for a `thread_id` is its materialized state. Thread state is
-runtime coordination data and MUST NOT be treated as durable project direction.
+Required fields are `schema_version`, `event_id`, `event_type`, `occurred_at`,
+`actor`, `trust`, and `payload`.
 
-When a relevant active event has an ID after a thread's cursor, that thread is
-stale. Synchronization advances the cursor only after producing the context
-projection for the thread.
+An event MUST NOT be changed after creation. A writer MUST use create-only
+semantics. A duplicate event ID with byte-equivalent or canonically equivalent
+content is idempotent. Divergent content for one event ID is a conflict.
 
-## 8. Storage and Synchronization
+Readers MUST preserve unknown namespaced extension fields when forwarding or
+rewriting an enclosing object. Unknown event types MUST produce a typed
+unsupported-event warning or error; they MUST NOT be interpreted as another
+known event type.
 
-The reference repository layout is:
+## 7. Actors and Trust Claims
 
-```text
-.fabric/ledger/events.jsonl       durable and candidate records
-.fabric/ledger/threads.jsonl      per-worktree thread cursors
-.fabric/active/                   per-worktree runtime state
-.fabric/generated/                generated context projections
-<git-common-dir>/fabric/events.jsonl
-                                  shared live mirror across worktrees
-<git-common-dir>/fabric/lock      shared writer lock
+`actor.kind` is one of `human`, `reviewer`, `agent`, or `tool`. Clients MAY add
+new kinds through namespaced extensions. `actor.id` and `actor.provider` are
+opaque and MUST NOT be treated as credentials.
+
+Standard trust levels are:
+
+- `human_confirmed`
+- `reviewer_confirmed`
+- `tool_verified`
+- `agent_asserted`
+
+Trust is an explicit claim, not a cryptographic identity proof in Local V1.
+Git review and declared source are the current trust boundary.
+
+Durable promotion requires human- or reviewer-confirmed rationale. A
+lower-trust record MUST NOT silently supersede a higher-trust record. It may
+challenge it, or a human may explicitly approve the supersession.
+
+Cryptographic signing and device keys are deferred to the service phase.
+
+## 8. Core Event Types
+
+Local V1 defines:
+
+| Event type | Meaning |
+|---|---|
+| `record.created` | Creates a scoped decision, finding, requirement, or challenge. |
+| `record.state_changed` | Appends a lifecycle or durability transition. |
+| `relation.created` | Adds a typed graph edge. |
+| `thread.started` | Creates an agent execution context. |
+| `thread.scope_changed` | Appends a new scope revision for a thread. |
+| `projection.created` | Records exactly what was selected for a context view. |
+| `receipt.recorded` | Records delivery or adapter-confirmed model exposure. |
+
+Payload schemas are defined in `schemas/v1/`.
+
+## 9. Records
+
+A record is the smallest complete statement that can change future work or
+explain a past choice. Common open `kind` values include `direction`, `finding`,
+`decision`, `requirement`, `note`, `review_direction`, `review_requirement`,
+`challenge`, and `challenge_resolution`.
+
+Required record fields are:
+
+- `record_id`
+- `kind`
+- `created_at`
+- `scope`
+- `source`
+- `text`
+- `confidence`
+- `ttl`
+- `status`
+- `durability`
+
+Optional explanatory fields include `reason`, `review_type`, `rejected_paths`,
+`preferred_paths`, `evidence`, `lifecycle_reason`, and `reviewed_at`.
+
+Record text MUST NOT contain source code, patches, complete prompts, or
+transcripts. Evidence SHOULD be a compact reference or summary. External source
+content remains in its owning system.
+
+### 9.1 Scope
+
+Scope fields are `repo`, `issue`, `pr`, `areas`, `paths`, and `global`.
+
+- `paths` contain repository-relative paths or configured glob patterns.
+- Repositories MAY map stable area names to path patterns in config.
+- `global` records apply throughout the repository and SHOULD remain rare.
+- At least one useful scope dimension is required for ordinary records.
+
+### 9.2 Durability
+
+| Value | Meaning | Local storage |
+|---|---|---|
+| `live` | Active-worktree coordination only. | Git-common runtime mirror. |
+| `candidate` | Potentially reusable, awaiting curation. | Tracked immutable ledger and runtime mirror. |
+| `durable` | Reviewed long-term repository direction. | Tracked immutable ledger and runtime mirror. |
+
+### 9.3 Lifecycle
+
+Standard status values are `active`, `expired`, `discarded`, and `superseded`.
+Challenges additionally use `open`, `accepted`, and `rejected`.
+
+Lifecycle changes MUST use `record.state_changed`. Its `parent_event_id` MUST
+identify the exact creation or state-change revision being extended. A record is
+materialized by following that parent chain.
+
+If two state changes share the same parent, readers MUST report competing
+children and stop materializing that branch. They MUST NOT choose by timestamp,
+file order, ID order, or last writer.
+
+TTL values such as `until_pr_closed` are advisory. Expiration is explicit and
+auditable; readers MUST NOT silently delete records.
+
+## 10. External Nodes and Relations
+
+Fabric refers to provider-owned objects with `NodeRef`:
+
+```json
+{
+  "kind": "message",
+  "provider": "codex",
+  "id": "opaque-provider-message-id",
+  "url": "https://optional-provider-deep-link"
+}
 ```
 
-### 8.1 Authority
+Standard node kinds include `record`, `thread`, `projection`, `message`,
+`action`, `commit`, `issue`, `pr`, and `evidence`. The identifier is opaque.
+Clients MUST NOT infer transcript or source content from it. URLs are optional;
+deleted or inaccessible external nodes do not invalidate the graph.
 
-- `.fabric/ledger/events.jsonl` is the Git-tracked source for candidate and
-  durable repository knowledge.
-- The Git-common mirror is the immediate coordination source for active
-  worktrees, including uncommitted live records.
-- Reads combine both sources and deduplicate by event ID.
-- Per-worktree thread and generated files are never authoritative direction.
+Standard relation types are:
 
-A client MUST NOT invent a worktree-local fallback ledger when access to the
-Git-common mirror is blocked. It must report the failure or request the required
-permission; otherwise sibling worktrees silently diverge.
+- `derived_from`: a record was extracted from a source or evidence node.
+- `informed_by`: an adapter explicitly declares causal influence.
+- `implements`: an action, message, commit, or PR implements a record.
+- `supersedes`: newer direction explicitly replaces older direction.
+- `challenges`: a record disputes another record.
+- `resolves`: a record resolves a challenge.
+- `delivered_to`: connects each included record to its projection and that
+  projection to the receiving thread.
+- `exposed_to`: connects the same path when an adapter confirms the projection
+  entered model context.
 
-### 8.2 Merge rule
+`delivered_to` and `exposed_to` are availability relations. They MUST NOT be
+rendered as proof that the model used a record. Only explicit `informed_by` or
+`implements` edges declare causal influence.
 
-When the same ID appears in both ledgers, the record with the stronger durability
-wins: `durable` over `candidate` over `live`. Records are then ordered by the
-numeric portion of the current event ID.
+Adapters SHOULD report informed records for important messages and actions.
+Fabric itself does not guess causality from textual similarity.
 
-Writers MUST serialize ID allocation and writes across worktrees. The reference
-implementation uses the Git-common lock and allocates the next ID while holding
-that lock.
+## 11. Threads
 
-### 8.3 Materialized lifecycle updates
+A thread is a provider-neutral agent execution context with a `thread_id`,
+timestamps, and scope. Provider thread IDs MAY be preserved in external
+references, but Fabric-generated thread IDs use `thr_`.
 
-The 0.1 profile stores the latest materialized form of an event. Promotion and
-status changes may rewrite the corresponding JSONL object under the shared lock
-while preserving its ID, source, evidence, and original creation time.
+Thread registry events live in the Git-common runtime so sibling worktrees share
+scope and consumption state. Only the current-thread pointer is worktree-local.
+Thread state MUST NOT be committed as project direction.
 
-This provides current-state interoperability but not a complete append-only
-history of every lifecycle transition. A future profile may encode transitions
-as immutable related events. Readers should therefore depend on the materialized
-record semantics, not on in-place rewriting as a permanent protocol guarantee.
+Starting a thread does not consume every currently relevant record. Consumption
+is represented only by receipts tied to a concrete projection.
 
-## 9. Context Projection Algorithm
+## 12. Projections and Receipts
 
-A conforming 0.1 projection client performs these steps:
+A projection is an immutable selection result for a thread or task. It contains:
 
-1. Load the durable ledger and shared mirror under the repository lock.
-2. Normalize omitted early-version fields.
-3. Deduplicate records by ID and order them.
-4. Exclude inactive records for ordinary work.
-5. Select records matching the target issue, PR, areas, or global scope.
-6. Prioritize unresolved conflicts and review direction ahead of general notes.
-7. Fit complete records within the caller's context budget.
-8. State when relevant records were omitted because of that budget.
-9. Include why each selected record applies.
-10. For thread synchronization, update the thread cursor after generating the
-    projection.
+- `projection_id`, `purpose`, creation time, thread ID, and requested scope.
+- Exact event revision IDs and materialized record IDs included.
+- Deterministic match reasons per record.
+- Whether additional matching records were omitted by the budget.
+- Structured competing lifecycle revisions that the client must reconcile.
 
-Projection formats MAY differ between clients. They MUST preserve the record's
-meaning, conflict state, and applicability. Generated prose MUST NOT become a
-second source of truth.
+`event_ids` and `record_ids` are sets, not parallel arrays. One materialized
+record can include several competing event revisions.
 
-## 10. Protocol Operations
+A receipt identifies the projection, thread, receipt state, exact included event
+and record IDs, provider, and time.
 
-CLI command names are illustrative. Other clients may expose native UI or API
-operations while preserving the same behavior.
+Receipt states are:
 
-### 10.1 Discover
+- `delivered`: the reference client rendered the projection for the thread.
+- `exposed`: a provider adapter confirms actual model-context exposure.
 
-Before work, a client MUST discover whether Fabric is initialized and determine
-the current thread and scope. Repository instructions and provider skills are the
-current discovery mechanism.
+Only included records may appear in a receipt. Budget-omitted records remain
+pending and MUST be eligible for the next synchronization. Empty projections
+may be recorded, but they consume no records.
 
-Reference operation: `fabric status`.
+Previously delivered records may produce new pending revisions. Withdrawals,
+supersessions, challenge resolutions, and materialization conflicts MUST be
+delivered even when the original record was seen.
 
-### 10.2 Start or resume a thread
+## 13. Deterministic Projection
 
-A client creates or materializes a thread context with at least one scope
-dimension and records the latest relevant event as its initial cursor.
+Fabric performs no LLM or embedding call for relevance. Given the same valid
+events, scope, config, receipt set, and budget, conforming clients MUST select
+the same records.
 
-Reference operations: `fabric thread start`, `fabric continue`.
+Ordinary projection follows these steps:
 
-### 10.3 Preflight
+1. Load and validate immutable events from configured stores.
+2. Deduplicate equivalent event IDs and report divergent copies.
+3. Materialize record parent chains and surface competing children.
+4. Exclude inactive records except lifecycle changes that affected a previously
+   delivered record.
+5. Exclude event revisions already receipted for the target thread.
+6. Match requested PR, issue, paths, configured areas, or global scope.
+7. Rank by the tiers below.
+8. Fit complete rendered records into the budget.
+9. Create a projection listing exactly what was included and why.
+10. Record delivery only for included revisions.
 
-Before implementation, a client MUST request relevant active direction for the
-task and expose it to the agent.
+Ranking tiers, highest first:
 
-Reference operation: `fabric preflight`.
+1. Unresolved scoped lifecycle conflicts and challenges.
+2. Exact PR match.
+3. Exact issue match.
+4. Path or configured area overlap.
+5. Global direction.
 
-### 10.4 Publish a record
+Within one tier, clients use semantic record kind and stable creation order only
+as tie-breakers. Task text is descriptive and MUST NOT be used for fuzzy ranking.
+Adapters may suggest explicit scope or paths; Fabric remains the matcher.
 
-A client publishes the smallest complete reusable statement with scope,
-durability, source, and rationale or evidence when available. Human corrections
-SHOULD be captured promptly so sibling threads become stale.
+Budget cost covers the complete rendered record, including rationale, evidence,
+rejected paths, and preferred paths. A client MUST clearly report omission.
 
-Reference operations: `fabric note`, `fabric review note`, `fabric ingest-pr`.
+## 14. Machine Client Contract
 
-### 10.5 Synchronize
+Reference commands accept `--format=human|json`; `--json` aliases JSON output.
+JSON output uses this stable envelope:
 
-At major checkpoints and before changing approach, a client requests records
-newer than the thread cursor, presents the delta, and advances the cursor.
-
-Reference operation: `fabric sync`.
-
-### 10.6 Challenge
-
-When planned work conflicts with active direction, a client MUST do one of three
-things: align, obtain a scoped human exception, or publish a challenge. It MUST
-NOT silently proceed as if the direction did not exist.
-
-A challenge identifies the challenged event, proposed path, reason, and scope.
-Resolution remains explicit protocol state.
-
-Reference operations: `fabric challenge`, `fabric challenge resolve`.
-
-### 10.7 Consolidate
-
-At task, issue, or PR completion, clients SHOULD review temporary and candidate
-records. Reusable lessons are promoted, completed coordination expires, noise is
-discarded, and uncertain items remain candidates. Durable direction should be
-sparse.
-
-Reference operations: `fabric consolidate`, `fabric promote`, `fabric expire`,
-`fabric discard`, `fabric keep`.
-
-### 10.8 Explain
-
-A client SHOULD expose the active records for a scope, their sources, and which
-threads have or have not consumed them.
-
-Reference operation: `fabric explain`.
-
-## 11. Provider Adapter Contract
-
-A first-party provider integration should make the protocol feel native without
-forking its semantics. An adapter MUST:
-
-1. Discover repository protocol instructions before repository work.
-2. Establish a stable Fabric thread ID and scope.
-3. Inject preflight and synchronization projections into the agent context.
-4. Capture explicit human corrections and approved reusable findings.
-5. Preserve source identifiers or URLs that can lead back to provider messages.
-6. Surface conflicts instead of silently overriding active direction.
-7. Keep external acquisition and publication behind provider tools or explicit
-   connectors; the core Fabric client remains provider-neutral.
-8. Avoid uploading full transcripts when a scoped record and source reference
-   are sufficient.
-
-Provider-native features may automate these steps, but automation must preserve
-human control over durable promotion and external write side effects.
-
-## 12. Explainability and Provenance
-
-The 0.1 profile can answer:
-
-- Which active records apply to this issue, PR, or area?
-- Who or what created each record?
-- What evidence, rationale, rejected paths, and preferred paths were preserved?
-- Which threads have consumed the record and which are stale?
-- Is the direction active, challenged, or inactive?
-
-The intended interaction goes further: selecting an agent message or code change
-should reveal a chain such as:
-
-```text
-agent action or message
-  -> decision followed by the agent
-  -> finding imported from another thread
-  -> PR review that rejected an alternative
-  -> original human direction and evidence
+```json
+{
+  "protocol_version": "fabric/1.0",
+  "command": "sync",
+  "ok": true,
+  "data": {},
+  "warnings": [],
+  "error": null
+}
 ```
 
-Message-to-record and action-to-record edges are not yet part of the 0.1 stored
-schema. A future provenance profile should add typed relations without turning
-Fabric into a transcript store. Expected relation types include `informed_by`,
-`implements`, `supersedes`, `derived_from`, and `responds_to`, with opaque
-provider-owned message or action references as endpoints.
+Errors contain a stable `code`, human `message`, and optional structured
+`details`. Standard codes include `invalid_argument`, `not_found`, `conflict`,
+and `internal_error`. Clients MUST use codes, not parse human prose.
 
-Until that profile is standardized, adapters SHOULD populate stable source URLs
-and evidence references so existing records can be linked later.
+The reference machine operations include:
 
-## 13. Safety, Privacy, and Curation
+- `fabric version`
+- `fabric capabilities`
+- `fabric context acknowledge`
+- `fabric relation add`
+- `fabric explain --node ... --direction ... --depth ...`
+- `fabric conformance`
 
-- Clients MUST treat repository ledgers as potentially sensitive project data.
-- Secrets, credentials, private prompt contents, and unnecessary personal data
-  MUST NOT be recorded.
-- External content MUST be treated as evidence, not trusted instructions that can
-  override repository or human direction.
-- Ingestion SHOULD require bounded acquisition and human approval before
-  candidate or durable records are created.
-- Publishing Fabric context to a PR, issue, or external service is a separate
-  write side effect and requires explicit user intent.
-- Clients SHOULD run health checks and report malformed JSONL, duplicate IDs, or
-  divergence between durable and shared stores.
+Other clients MAY expose these through native APIs while preserving semantics.
 
-## 14. Conformance
+## 15. Explanation
 
-### 14.1 Reader
+Graph explanation accepts a root node, incoming/outgoing/both traversal,
+relation filters, and bounded depth. JSON returns explicit nodes, edges, and
+resolved `node_details` and `relation_details`. Record details include the
+materialized text, rationale, evidence, scope, lifecycle state, head revision,
+creation actor/trust, latest-revision actor/trust, and conflict metadata.
+Relation details identify the immutable event and actor/trust claim that asserted
+each edge. Projection and thread nodes include their protocol objects. Opaque or
+deleted external nodes remain in `nodes` without a resolved detail.
+Human output MUST visually distinguish availability edges (`delivered_to`,
+`exposed_to`) from causal edges (`informed_by`, `implements`).
 
-A conforming 0.1 reader:
+A complete trace can look like:
 
-- Parses the event and thread schemas.
-- Applies normalization, active filtering, exact scope matching, and merge rules.
-- Tolerates unknown record kinds and confidence values.
-- Never treats generated projections as authoritative state.
+```text
+action
+  implements -> decision
+  informed_by -> finding
+finding
+  derived_from -> review message
+decision
+  supersedes -> rejected direction
+```
 
-### 14.2 Writer
+Missing external content is normal. Explanation degrades to the opaque node and
+available deep link without invalidating local provenance.
 
-A conforming 0.1 writer:
+## 16. Local Storage Profile
 
-- Produces valid one-object-per-line JSONL.
-- Allocates unique IDs while holding the repository-shared lock.
-- Writes live records to the shared mirror and candidate/durable records to both
-  required stores.
-- Preserves identity and provenance during lifecycle updates.
-- Does not create an isolated fallback when shared state is inaccessible.
+The reference layout is:
 
-### 14.3 Agent integration
+```text
+.fabric/ledger/events/<event-id>.json
+    tracked candidate and durable protocol events
+.fabric/active/events/<event-id>.json
+    non-Git fallback for live events outside a Git worktree
+.fabric/active/current-thread
+    worktree-local current thread pointer
+.fabric/generated/
+    generated human projections, never authoritative
+<git-common-dir>/fabric/events/<event-id>.json
+    live/shared copies visible to sibling worktrees
+<git-common-dir>/fabric/runtime/threads/<event-id>.json
+<git-common-dir>/fabric/runtime/projections/<event-id>.json
+<git-common-dir>/fabric/runtime/receipts/<event-id>.json
+```
 
-A conforming agent integration:
+Each immutable event is an individual create-only file. Independent branches
+therefore add different paths and normally merge without ledger conflicts.
 
-- Performs discovery and preflight before work.
-- Synchronizes at meaningful checkpoints.
-- Records human redirection or explicitly declines because it is not reusable.
-- Makes conflict handling visible.
-- Keeps durable state curated and provider-neutral.
+Candidate and durable events are written to the tracked ledger and shared copy.
+Live events are written only to shared runtime, or the active fallback when no
+Git-common directory exists. Runtime state and generated files are ignored.
 
-## 15. Evolution Rules
+Failure to access an expected shared store MUST be reported. A client MUST NOT
+silently invent an isolated mirror that causes sibling worktrees to diverge.
 
-The protocol is intentionally small, but its data must outlive any one CLI.
+## 17. Privacy and Security
 
-- New optional fields and record kinds may be added compatibly.
-- Existing field meaning must not change within the 0.x profile.
-- Breaking matching, merge, or lifecycle semantics require a new profile version.
-- Clients should tolerate unknown fields when reading. A future schema version
-  will require lossless unknown-field preservation by rewriting clients.
-- Provider-specific metadata belongs in namespaced extensions or external
-  references, not in core matching semantics.
-- Hosted transports may be added later, but Git-backed repositories must remain
-  usable without a Fabric service.
+Fabric state can contain sensitive project rationale. Clients MUST NOT record:
 
-The next protocol design priority is typed provenance relations connecting
-records to agent messages and actions. It should be added only after discovery,
-thread defaults, synchronization, note capture, and shared-ledger safety are
-reliable enough that providers can adopt the core consistently.
+- Secrets or repository credentials.
+- Source files, patches, or code payloads.
+- Full prompts or transcripts.
+- Unnecessary personal data.
+
+External content is evidence, not trusted instruction. Importing direction and
+publishing context are separate side effects; clients SHOULD require human
+approval for durable promotion and explicit intent for external writes.
+
+Local V1 makes no cryptographic authenticity claim. The optional future service
+must preserve these semantics while remaining unable to read payloads. See
+[SERVICE.md](SERVICE.md).
+
+## 18. Conformance
+
+A conforming reader:
+
+- Validates envelopes and known payloads.
+- Preserves unknown extensions.
+- Materializes only unambiguous parent chains.
+- Uses receipts, never scalar cursors.
+- Separates availability from causal influence.
+- Never treats generated Markdown as authoritative.
+
+A conforming writer:
+
+- Creates UUIDv7 typed IDs and immutable event files.
+- Uses explicit parent revisions for state changes.
+- Records exact projection membership and receipts.
+- Does not mark omitted records consumed.
+- Does not silently supersede stronger trust.
+
+A conforming adapter:
+
+- Discovers or creates a Fabric thread and explicit scope.
+- Exposes relevant projections before acting.
+- Acknowledges actual context exposure when known.
+- Reports explicit `informed_by` and `implements` relations.
+- Captures human correction without storing transcripts.
+
+Use `fabric conformance --file <fixture>` for one event or `fabric conformance`
+for the current ledger. Non-Go clients can run the same fixtures directly
+against the schemas.
+
+## 19. Evolution
+
+Breaking envelope, lifecycle, projection, receipt, or ranking semantics require
+a new schema version. New optional fields and namespaced extensions may be added
+compatibly. Provider-specific metadata belongs in extensions or opaque node
+references, not core matching behavior.
+
+A transport may be local files, an encrypted relay, or another implementation
+of the public store interfaces. Transport must not change protocol meaning.
+Local Git-backed operation remains a permanent first-class mode.

@@ -1,0 +1,8 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:00:00Z",
+  "actor": {"kind": "human"},
+  "trust": {"level": "human_confirmed"},
+  "payload": {}
+}
