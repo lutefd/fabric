@@ -1,0 +1,23 @@
+.agents/skills/fabric-session/agents/openai.yaml
+  s_99abcc89aab555::t_72cf11b71c55f0 3-4,6
+.agents/skills/fabric-session/SKILL.md
+  s_99abcc89aab555::t_72cf11b71c55f0 3,8-10,12-14,17-18,20
+AGENTS.md
+  s_99abcc89aab555::t_72cf11b71c55f0 6-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "a8f53a40af92e48ce327705401528b464edd811c",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
