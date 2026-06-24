@@ -1,0 +1,19 @@
+docs/why-fabric-exists.md
+  s_e35cfdcf98def0::t_be7a3f4548650c 11-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "927a93a3e858d4d26f329556c063492687b32a4f",
+  "prompts": {},
+  "sessions": {
+    "s_e35cfdcf98def0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efbbd-9951-7b90-aaac-d2b72e6cacb5",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
