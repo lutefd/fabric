@@ -314,6 +314,13 @@ Protocol and repository behavior do not depend on CLI parsing, and storage does
 not own domain semantics. A future encrypted transport can implement the public
 store interfaces without moving those boundaries back into the CLI.
 
+## License
+
+Fabric is available under the [Apache License 2.0](LICENSE), including the
+protocol specification, schemas, CLI, and documentation. Anyone may use,
+modify, distribute, self-host, or commercially operate compatible
+implementations under its terms.
+
 ## Future Private Service
 
 Local Git-backed operation is permanent. A future optional service may relay
