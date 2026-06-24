@@ -1,8 +1,10 @@
 package fabric
 
 import (
+	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -364,6 +366,94 @@ func TestSyncEnforcesBudgetAndUsesThreadScopeForApplicability(t *testing.T) {
 	if got := threads["thread-b"].LastSeenEventID; got != "evt_000002" {
 		t.Fatalf("thread-b last seen = %q, want evt_000002", got)
 	}
+}
+
+func TestConcurrentSharedLedgerWritesDoNotLoseEvents(t *testing.T) {
+	chdirTemp(t)
+	if err := os.Mkdir(".git", 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-2", "--area", "ledger-safety")
+
+	const workers = 10
+	var wg sync.WaitGroup
+	errors := make(chan error, workers)
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if err := Run([]string{"note", "--durable", fmt.Sprintf("concurrent note %d", i)}); err != nil {
+				errors <- err
+			}
+		}(i)
+	}
+	wg.Wait()
+	close(errors)
+	for err := range errors {
+		t.Fatalf("concurrent note failed: %v", err)
+	}
+
+	events, err := loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != workers {
+		t.Fatalf("events count = %d, want %d", len(events), workers)
+	}
+	seen := map[string]bool{}
+	for _, event := range events {
+		if event.ID == "" {
+			t.Fatal("event has empty ID")
+		}
+		if seen[event.ID] {
+			t.Fatalf("duplicate event ID %s", event.ID)
+		}
+		seen[event.ID] = true
+	}
+
+	sharedPath := ".git/" + sharedEventsRel
+	sharedData := mustRead(t, sharedPath)
+	for i := 0; i < workers; i++ {
+		if !strings.Contains(sharedData, fmt.Sprintf("concurrent note %d", i)) {
+			t.Fatalf("shared ledger missing note %d", i)
+		}
+	}
+}
+
+func TestDoctorDetectsLedgerProblems(t *testing.T) {
+	chdirTemp(t)
+	if err := os.Mkdir(".git", 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-2", "--area", "ledger-safety")
+	mustRun(t, "note", "--live", "Live direction")
+	mustRun(t, "note", "--candidate", "Candidate direction")
+	mustRun(t, "note", "--durable", "Durable direction")
+
+	output := captureStdout(t, func() {
+		mustRun(t, "doctor")
+	})
+	assertContains(t, output, "Shared mirror:\nok")
+	assertContains(t, output, "Durable ledger:\nok")
+	assertContains(t, output, "- live: 1")
+	assertContains(t, output, "- candidate: 1")
+	assertContains(t, output, "- durable: 1")
+	assertContains(t, output, "- duplicate IDs: none")
+	assertContains(t, output, "- invalid JSONL: none")
+	assertContains(t, output, "- durable/shared mismatch: none")
+
+	if err := os.WriteFile(eventsPath, []byte("not json\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	output = captureStdout(t, func() {
+		mustRun(t, "doctor")
+	})
+	assertContains(t, output, "Durable ledger:\nerror")
+	assertContains(t, output, "- invalid JSONL:")
 }
 
 func TestSyncBudgetCanOmitAllRelevantDirection(t *testing.T) {
