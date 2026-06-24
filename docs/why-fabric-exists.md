@@ -1,16 +1,92 @@
 # Why Fabric Exists
 
-Modern repository work is no longer a single conversation between one engineer
-and one tool. It is a swarm of short-lived agent threads, IDE sessions, review
-comments, CI checks, and sibling worktrees. That parallelism is useful, but it
-creates a new failure mode: the repository can change quickly while the reasons
-behind those changes evaporate.
+The repository had already answered the question. The person doing the work did
+not know that, and neither did the agent.
 
-Fabric exists because engineering teams and agent-platform builders need a
-small, provider-neutral layer for repository memory: not a transcript archive,
-not another issue tracker, and not a replacement for Git, but a protocol for
-preserving the decisions and causal provenance that disposable agent contexts
-otherwise lose.
+That sentence describes an uncomfortable amount of modern software development.
+We keep treating it as a prompting problem, a model problem, or a documentation
+problem. Often it is something more ordinary and more embarrassing: the
+organization learned, but the work did not inherit the learning.
+
+This article grew out of a conversation between two engineers at a large
+technology company. The scene below is a composite; names, project details, and
+internal context have been removed or changed. The failure itself is real.
+
+## A Conversation About Forgetting
+
+One engineer asked whether the trouble around AI-assisted development was
+really coordination debt.
+
+The answer was immediate: coordination and alignment were part of it, but the
+company did not lack either. Teams held discussions. Leads set direction.
+Reviewers explained tradeoffs. The problem was that the next person often did
+not follow what had been decided. Everyone arrived ready to own the problem and
+build a version in their own image.
+
+Then came a painfully mundane example. A team had built a complete listing
+endpoint. Someone later asked whether the results could be filtered. Instead of
+extending the endpoint whose job was already to list those resources, another
+implementation proposed a second listing endpoint with filters.
+
+Nothing about this was technically difficult. The project had a focus. The
+ownership boundary already existed. The team had already paid for the design
+conversation. Yet the next unit of work behaved as if none of that had happened.
+
+The conversation moved to pull requests. One engineer said he could open some
+PRs and understand what changed, but not why anyone was doing it. Sometimes a
+constraint had been explained in another PR and a later change still pushed the
+rejected idea through a side door. There was no visible learning between
+attempts.
+
+That used to happen less often. People absorbed a project's style through
+review. They saw the same maintainers reject the same class of mistake, learned
+the local boundaries, and gradually stopped proposing it. The learning was
+imperfect and social, but it accumulated.
+
+Now more execution happens inside agents. Each thread is a disposable artifact.
+Unless somebody explicitly tells the next thread that approach X was rejected
+in discussion Y, it does not know. Add parallel worktrees and several agents,
+and the same bad proposal can appear three times before the first correction has
+left its original conversation.
+
+The irony was hard to miss: people were starting to work like stateless agent
+threads, while agent threads inherited the oldest organizational failure of all.
+Neither side had reliable memory of why the project had chosen its direction.
+
+## We Keep Paying for the Same Decision
+
+This is the part worth ranting about. We already spend the expensive human time.
+We debate the boundary. We inspect the failure. We reject the tempting shortcut.
+We write the review. Then we throw away the part that would make the next piece
+of work cheaper.
+
+The patch survives. The reason becomes folklore.
+
+The transcript survives somewhere in a provider account. Nobody will replay it.
+
+The PR remains searchable. Nobody starting a seemingly unrelated task knows
+which old PR contains the warning they need.
+
+The architecture document says what the system looks like, but not necessarily
+which plausible alternative was tried, rejected, and should not be smuggled
+back in six months later.
+
+We can put more rules in `AGENTS.md`, but a large project eventually turns that
+file into an encyclopedia. Every agent receives every warning, most warnings do
+not apply, the useful ones disappear into prompt sediment, and maintainers stop
+knowing which instructions are still alive. A global rule file is not scoped
+memory. It is a noticeboard.
+
+So the problem is not simply that decisions are missing. Decisions exist. The
+problem is that they are trapped in the context where they were made, stripped
+of scope when copied, or disconnected from the later action they were supposed
+to influence.
+
+Fabric began as a response to that failure. It is a provider-neutral protocol
+for persistent repository decisions and causal provenance across agent threads,
+worktrees, and tools. It is not a transcript archive, another issue tracker, or
+a replacement for Git. It is an attempt to preserve the small amount of prior
+reasoning that should change what the next person or agent does.
 
 The protocol boundary is defined in [PROTOCOL.md](../PROTOCOL.md). The local
 reference client and repository behavior are summarized in
@@ -18,35 +94,137 @@ reference client and repository behavior are summarized in
 [CONFORMANCE.md](../CONFORMANCE.md), and the optional future private relay is
 kept separate in [SERVICE.md](../SERVICE.md).
 
-## The Problem: Work Outlives the Thread
+## What a Small OSS Sample Revealed
 
-Agent threads are cheap to start and easy to abandon. That is part of their
-power. A thread can investigate a bug, draft an implementation, respond to a
-review, or test an idea without becoming the permanent place where the project
-lives.
+This is not only a large-company story. To test the same failure against public
+project activity, we inspected a bounded sample of 100 pull requests merged into
+`vercel/next.js` from June 15 through June 24, 2026. This was an exploratory
+sample, not a representative benchmark, but it showed why raw PR replay is a
+poor context strategy.
 
-But repository direction often appears inside those disposable contexts:
+Across those 100 PRs, GitHub returned 234 top-level issue comments. Two hundred
+were automation comments and 34 were human comments. The same PRs contained 311
+submitted reviews, but only 29 review bodies contained text; 116 were approvals.
+Useful rationale was often elsewhere: in the PR description, commit history, or
+inline review threads.
 
-- A human corrects an agent's assumption.
-- A reviewer explains why a change belongs in a shared layer.
-- One worktree discovers that a path is a dead end.
-- Another thread learns that a temporary workaround should expire when a PR
-  closes.
-- A platform adapter knows exactly which prior direction was included in the
-  model context, but the repository does not.
+The counts came from GitHub's PR metadata for the 100 most recent merged PRs at
+collection time. Top-level comments from `github-actions`,
+`vercel-release-bot`, and accounts whose login ended in `[bot]` were classified
+as automated. That heuristic is intentionally simple and the figures should be
+read as a snapshot.
 
-Without a shared protocol, every new thread starts with an incomplete memory of
-the work. The code may contain the final result, but it rarely contains the
-review rationale, rejected alternatives, source of authority, or coordination
-state that made the result correct.
+We then examined three PRs in detail:
 
-That gap gets worse as teams run more agents in parallel. A human can redirect
-thread A while thread B continues in a sibling worktree with the rejected plan.
-A useful finding can be rediscovered repeatedly because it never left the
-conversation where it first appeared. A later maintainer can see what changed in
-Git and still not know which decision the change implemented.
+| PR | Inline comments | Direction worth preserving |
+|---|---:|---|
+| [`#95065`](https://github.com/vercel/next.js/pull/95065) | 7 | Sort Turbopack modules by path before ID to preserve gzip locality; use a tuple fallback when ordering `AssetIdent` is difficult. |
+| [`#95066`](https://github.com/vercel/next.js/pull/95066) | 2 | Match every prerendered route, including zero-fallback routes, before choosing the most-specific fallback parameters. |
+| [`#95069`](https://github.com/vercel/next.js/pull/95069) | 1 | Put hard agent-skill bail-outs before upgrade guidance and account for all common `app` and `pages` directory layouts. |
 
-Fabric is designed for that missing layer.
+Fabric dry-runs turned each discussion into one compact candidate record with
+scope, rationale, rejected paths, preferred paths, and evidence links. No
+records were ingested during the experiment. The exercise exposed an important
+boundary: Fabric can reduce future reading only if acquisition filters
+automation noise and humans curate what is actually reusable. Bulk ingestion
+would preserve the problem in a different format.
+
+## Large Projects Have Local Truths
+
+In a small codebase, a handful of conventions can live in a README or in the
+heads of two maintainers. In a large project, direction is rarely universal.
+The rendering subsystem may have different compatibility constraints from the
+build pipeline. A shared API layer may own pagination semantics that feature
+teams must not duplicate. One package may be migrating to a new abstraction
+while a neighboring package must remain on the old one until a release closes.
+
+These are not merely facts about files. They are decisions with boundaries:
+this applies to a particular area, path, issue, or PR; this alternative was
+considered and rejected; this exception is temporary; this reviewer or human
+made the call for a specific reason.
+
+Most existing ways of communicating those decisions break down with scale. A
+global instruction file becomes crowded with rules that do not apply to most
+work. Team documentation drifts away from the implementation. Review comments
+reach the people on one PR but not the agent starting related work tomorrow.
+Word of mouth depends on knowing whom to ask. The result is a familiar kind of
+organizational latency: the repository already learned something, but every new
+person or agent has to learn it again.
+
+Fabric makes direction addressable. A record can be scoped to a repository,
+issue, PR, configured area, or path. A thread declares the scope of its work,
+and deterministic projection selects the relevant active records within a
+budget. The goal is not to put the entire organization's memory into every
+prompt. It is to give each task the small set of decisions that can actually
+change its outcome.
+
+Consider a large framework with separate routing, caching, bundling, and
+developer-tooling areas. A routing reviewer decides that development behavior
+must choose the most-specific prerendered route that matches the requested URL,
+because choosing only by the number of fallback parameters can apply state from
+the wrong route. Captured as area- and path-scoped direction, that decision can
+reach later routing work without burdening an unrelated documentation or CSS
+task. The rationale and rejected approach travel with the instruction, so the
+next contributor does not have to reverse-engineer the rule from the final
+diff.
+
+Scope is what turns repository memory from a larger prompt into useful context.
+
+```mermaid
+flowchart LR
+    H["Human correction or review"] --> R["Scoped Fabric record"]
+    A["Agent finding or challenge"] --> R
+    R --> S{"Scope match"}
+    S -->|"routing area"| T1["Routing thread"]
+    S -->|"cache paths"| T2["Cache thread"]
+    S -->|"PR or issue"| T3["Related worktree"]
+    S -.->|"no match"| U["Unrelated work stays uncluttered"]
+    T1 --> C["Action, commit, or PR"]
+    T2 --> C
+    T3 --> C
+```
+
+## People Decide; Agents Carry Direction Forward
+
+Fabric is not meant to move authority from maintainers to agents. It gives
+people a durable way to express authority across the many contexts where work
+now happens.
+
+A maintainer may establish a constraint in review. An engineer may explain why
+a shared layer owns a behavior. An agent may discover a reproducible finding in
+one worktree. Another agent may challenge an older decision because new evidence
+changes the tradeoff. Fabric can preserve each contribution with its source,
+scope, confidence, trust claim, rationale, and lifecycle, while keeping the
+difference between them visible.
+
+That difference matters. Human- or reviewer-confirmed rationale is required for
+durable promotion. Lower-trust direction cannot silently replace stronger
+direction; it must challenge it or receive explicit approval. A challenge is
+not treated as disobedience or quietly resolved by whichever event was written
+last. It becomes reviewable repository state.
+
+This creates a practical collaboration loop:
+
+1. A person or agent records a compact decision, correction, finding, or
+   challenge in the scope where it applies.
+2. Concurrent threads receive relevant live direction before acting, including
+   updates from sibling worktrees.
+3. Agents align with that direction, or make disagreement explicit rather than
+   silently taking a conflicting path.
+4. Important actions and commits can declare which records informed or were
+   implemented by them.
+5. After the work, temporary coordination expires or is discarded, while
+   genuinely reusable direction can be reviewed and promoted.
+
+The value is cumulative. Review stops being the only place where architectural
+knowledge is transmitted. Senior engineers spend less time repeating the same
+correction. New contributors encounter the rationale near the area where it
+matters. Agents stop behaving as if every thread is the repository's first day.
+
+The protocol does not require every useful observation to become permanent.
+Live records coordinate active worktrees. Candidate records await curation.
+Durable records represent reviewed long-term direction. This keeps immediate
+coordination fast without turning every comment into organizational law.
 
 ## Why Transcripts Are Not Repository Memory
 
@@ -146,6 +324,31 @@ from `informed_by` and `implements` causal paths, alongside unresolved external
 nodes, record rationale, evidence, trust claims, and lifecycle state. That view
 can show what was available without pretending that context delivery is mind
 reading.
+
+```mermaid
+flowchart TB
+    R["Direction record"] --> P["Projection"]
+    P -->|"delivered_to"| T["Agent thread"]
+    P -->|"exposed_to"| M["Model context"]
+
+    A["Action or message"] -->|"informed_by"| R
+    C["Commit or PR"] -->|"implements"| R
+
+    subgraph Availability
+        P
+        T
+        M
+    end
+
+    subgraph Causality
+        A
+        C
+    end
+```
+
+The projection paths show availability: the record was selected, delivered, or
+confirmed in model context. The causal edges exist only after an actor explicitly
+asserts influence or implementation. One does not imply the other.
 
 ## A Provider-Neutral Protocol, Not a Provider Feature
 
