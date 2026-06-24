@@ -12,3 +12,6 @@
 # shared mirror out of Git.
 .fabric/active/
 .fabric/generated/
+
+# Local IDE state.
+.idea/

@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install evaluation tools
+        run: sudo apt-get update && sudo apt-get install -y jq ripgrep
+
+      - name: Check formatting
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          if [[ -n "${unformatted}" ]]; then
+            printf 'Run gofmt on:\n%s\n' "${unformatted}"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Test with race detector
+        run: go test -race ./...
+
+      - name: Run Local V1 evaluation
+        run: ./evals/run-local-v1.sh
+
+      - name: Verify root installation
+        shell: bash
+        run: |
+          GOBIN="${RUNNER_TEMP}/bin" go install .
+          "${RUNNER_TEMP}/bin/fabric" version --json
