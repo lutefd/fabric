@@ -20,6 +20,7 @@ generated:
   sync_delta: ".fabric/generated/SYNC_DELTA.md"
   continuation_context: ".fabric/generated/CONTINUATION_CONTEXT.md"
   challenge: ".fabric/generated/CHALLENGE.md"
+  consolidation: ".fabric/generated/CONSOLIDATION.md"
 `, repo)
 }
 
@@ -109,6 +110,32 @@ fabric continue --pr "<pr>"
 Read:
 
 .fabric/generated/CONTINUATION_CONTEXT.md
+`
+}
+
+func consolidateAfterMergeSkill() string {
+	return `# Consolidate After Merge Skill
+
+Use this when a PR is merged, closed, abandoned, or an issue is completed.
+
+Run:
+
+fabric consolidate --pr "<pr>"
+
+or:
+
+fabric consolidate --issue "<issue>"
+
+Read .fabric/generated/CONSOLIDATION.md.
+
+Classify direction:
+
+- promote when the lesson should guide future agents
+- expire when the direction was temporary but valid during the task
+- discard when it is too specific, noisy, wrong, or not useful
+- keep candidate when it may matter later but needs more evidence
+
+Do not promote every review comment. Durable direction should change what future agents do.
 `
 }
 
@@ -218,6 +245,29 @@ Read:
 .fabric/generated/CHALLENGE.md
 
 Mention the challenge in the PR or handoff.
+
+## Consolidation after PR/issue completion
+
+When a PR is merged, closed, or the issue is done, run:
+
+fabric consolidate --pr "<pr>"
+
+or:
+
+fabric consolidate --issue "<issue>"
+
+Read:
+
+.fabric/generated/CONSOLIDATION.md
+
+Review candidate directions and choose:
+
+- promote: reusable project direction
+- expire: useful during the task, no longer active
+- discard: not useful direction / too noisy / too specific
+- keep candidate: review later
+
+Do not promote every review comment. Durable project direction should be scarce.
 `
 }
 
@@ -229,5 +279,6 @@ func generatedFiles() []string {
 		challengePath,
 		ingestTemplatePath,
 		handoffPath,
+		consolidationPath,
 	}
 }

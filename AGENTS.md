@@ -96,4 +96,27 @@ Read:
 .fabric/generated/CHALLENGE.md
 
 Mention the challenge in the PR or handoff.
+
+## Consolidation after PR/issue completion
+
+When a PR is merged, closed, or the issue is done, run:
+
+fabric consolidate --pr "<pr>"
+
+or:
+
+fabric consolidate --issue "<issue>"
+
+Read:
+
+.fabric/generated/CONSOLIDATION.md
+
+Review candidate directions and choose:
+
+- promote: reusable project direction
+- expire: useful during the task, no longer active
+- discard: not useful direction / too noisy / too specific
+- keep candidate: review later
+
+Do not promote every review comment. Durable project direction should be scarce.
 <!-- fabric:end -->
