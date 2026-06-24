@@ -11,7 +11,7 @@ func TestChallengeFlowCreatesAndResolvesExplicitDirectionDispute(t *testing.T) {
 
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-c", "--pr", "123", "--issue", "VS-123", "--area", "file-opening")
-	mustRun(t, "note", "--issue", "VS-123", "--area", "file-opening", "Do not implement full Office preview; this is an entry-point consistency issue.")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "--area", "file-opening", "Do not implement full Office preview; this is an entry-point consistency issue.")
 	mustRun(t, "review", "note", "--pr", "123", "--issue", "VS-123", "--area", "file-opening", "Reviewer rejected picker-level Office special-casing; move unsupported file handling into the shared file-open resolver.")
 
 	output := captureStdout(t, func() {
@@ -73,7 +73,7 @@ func TestChallengeValidationAndTextForm(t *testing.T) {
 	chdirTemp(t)
 
 	mustRun(t, "init")
-	mustRun(t, "note", "--issue", "VS-123", "Existing direction")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "Existing direction")
 
 	if err := Run([]string{"challenge", "--wat"}); err == nil {
 		t.Fatal("challenge accepted unknown flag")
@@ -127,7 +127,7 @@ func TestChallengeCreateStorageFailures(t *testing.T) {
 	}
 
 	mustRun(t, "init")
-	mustRun(t, "note", "--issue", "VS-123", "Existing direction")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "Existing direction")
 
 	oldAppend := appendLedger
 	appendLedger = func(string, any) error {
@@ -140,7 +140,7 @@ func TestChallengeCreateStorageFailures(t *testing.T) {
 
 	chdirTemp(t)
 	mustRun(t, "init")
-	mustRun(t, "note", "--issue", "VS-123", "Existing direction")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "Existing direction")
 	if err := os.Remove(challengePath); err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}
@@ -153,7 +153,7 @@ func TestChallengeCreateStorageFailures(t *testing.T) {
 
 	chdirTemp(t)
 	mustRun(t, "init")
-	mustRun(t, "note", "--issue", "VS-123", "Existing direction")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "Existing direction")
 	if err := os.Remove(threadsPath); err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func TestChallengeResolveStorageFailuresAndStatuses(t *testing.T) {
 	}
 
 	mustRun(t, "init")
-	mustRun(t, "note", "--issue", "VS-123", "Existing direction")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "Existing direction")
 	mustRun(t, "challenge", "--direction", "evt_000001", "--issue", "VS-123", "Challenge for rejection")
 	mustRun(t, "challenge", "--direction", "evt_000001", "--issue", "VS-123", "Challenge for append failure")
 

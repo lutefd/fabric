@@ -182,7 +182,7 @@ func TestCommandLedgerAndGeneratedFileErrors(t *testing.T) {
 		mustRun(t, "init")
 		mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
 		mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123")
-		mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "direction")
+		mustRun(t, "note", "--durable", "--thread", "thread-a", "--issue", "VS-123", "direction")
 		if err := os.Remove(syncPath); err != nil && !os.IsNotExist(err) {
 			t.Fatal(err)
 		}
@@ -199,7 +199,7 @@ func TestCommandLedgerAndGeneratedFileErrors(t *testing.T) {
 		mustRun(t, "init")
 		mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
 		mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123")
-		mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "direction")
+		mustRun(t, "note", "--durable", "--thread", "thread-a", "--issue", "VS-123", "direction")
 
 		withAppendLedger(t, func(path string, value any) error {
 			if path == threadsPath {

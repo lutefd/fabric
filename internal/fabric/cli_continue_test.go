@@ -43,7 +43,7 @@ func TestContinueBudgetPrioritizesReviewDirection(t *testing.T) {
 
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-pr", "--pr", "123")
-	mustRun(t, "note", "--issue", "VS-123", "--area", "file-opening", "This older issue direction is long enough to exceed the tiny continuation budget.")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "--area", "file-opening", "This older issue direction is long enough to exceed the tiny continuation budget.")
 	mustRun(t, "review", "note", "--pr", "123", "--issue", "VS-123", "--area", "file-opening", "Fix")
 	mustRun(t, "continue", "--pr", "123", "--budget", "1")
 

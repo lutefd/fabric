@@ -56,7 +56,7 @@ func TestThreadStartValidationGeneratedIDAndLastSeen(t *testing.T) {
 	if err := Run([]string{"thread", "start"}); err == nil {
 		t.Fatal("thread start without scope returned nil error")
 	}
-	mustRun(t, "note", "--global", "Global direction")
+	mustRun(t, "note", "--durable", "--global", "Global direction")
 	mustRun(t, "thread", "start", "--issue", "VS-123")
 	mustRun(t, "thread", "start", "--id", "thread-pr", "--pr", "123")
 
@@ -101,8 +101,8 @@ func TestNoteValidationScopeInferenceAndBranchInference(t *testing.T) {
 	}
 
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123", "--area", "virtual-store/listing")
-	mustRun(t, "note", "--thread", "thread-a", "Inferred from thread")
-	mustRun(t, "note", "--kind", "constraint", "--global", "Repo-wide constraint")
+	mustRun(t, "note", "--durable", "--thread", "thread-a", "Inferred from thread")
+	mustRun(t, "note", "--durable", "--kind", "constraint", "--global", "Repo-wide constraint")
 
 	if err := os.MkdirAll(".git", 0o755); err != nil {
 		t.Fatal(err)
@@ -113,7 +113,7 @@ func TestNoteValidationScopeInferenceAndBranchInference(t *testing.T) {
 	if err := os.Remove(currentThreadPath); err != nil {
 		t.Fatal(err)
 	}
-	mustRun(t, "note", "Inferred from branch")
+	mustRun(t, "note", "--durable", "Inferred from branch")
 
 	events, err := loadEvents()
 	if err != nil {
@@ -185,7 +185,7 @@ func TestAgentProtocolUsesCurrentThreadAndRootAgentsFile(t *testing.T) {
 	}
 
 	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "FAB-1", "--area", "agent-protocol")
-	mustRun(t, "note", "--thread", "thread-a", "Root AGENTS.md is required")
+	mustRun(t, "note", "--durable", "--thread", "thread-a", "Root AGENTS.md is required")
 	statusBeforeSync := captureStdout(t, func() {
 		mustRun(t, "status")
 	})
@@ -202,7 +202,7 @@ func TestAgentProtocolUsesCurrentThreadAndRootAgentsFile(t *testing.T) {
 	})
 	assertContains(t, statusAfterSync, "No new relevant directions.")
 
-	mustRun(t, "note", "Current thread scope should be inferred")
+	mustRun(t, "note", "--durable", "Current thread scope should be inferred")
 	events, err := loadEvents()
 	if err != nil {
 		t.Fatal(err)
@@ -260,7 +260,7 @@ func TestSharedEventsPropagateAcrossGitWorktrees(t *testing.T) {
 	if err := os.Chdir(workA); err != nil {
 		t.Fatal(err)
 	}
-	mustRun(t, "note", "Direction from worktree A")
+	mustRun(t, "note", "--durable", "Direction from worktree A")
 	assertContains(t, mustRead(t, eventsPath), "Direction from worktree A")
 	assertContains(t, mustRead(t, commonGit+"/"+sharedEventsRel), "Direction from worktree A")
 
@@ -284,7 +284,7 @@ func TestInitMirrorsExistingLocalEventsToSharedGitLedger(t *testing.T) {
 
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-1")
-	mustRun(t, "note", "Existing local direction")
+	mustRun(t, "note", "--durable", "Existing local direction")
 
 	sharedPath := ".git/" + sharedEventsRel
 	assertContains(t, mustRead(t, sharedPath), "Existing local direction")
@@ -323,7 +323,7 @@ func TestSyncExplicitThreadOverridesCurrentThread(t *testing.T) {
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-1", "--area", "agent-protocol")
 	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "OTHER-1", "--area", "other-area")
-	mustRun(t, "note", "--thread", "thread-b", "--issue", "FAB-1", "--area", "agent-protocol", "Direction for the non-current thread")
+	mustRun(t, "note", "--durable", "--thread", "thread-b", "--issue", "FAB-1", "--area", "agent-protocol", "Direction for the non-current thread")
 
 	mustRun(t, "sync", "--thread", "thread-a")
 
@@ -346,8 +346,8 @@ func TestSyncEnforcesBudgetAndUsesThreadScopeForApplicability(t *testing.T) {
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123", "--area", "producer-only")
 	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123")
-	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "--area", "producer-only", "Short")
-	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "--area", "producer-only", "This note is long enough to exceed the tiny budget")
+	mustRun(t, "note", "--durable", "--thread", "thread-a", "--issue", "VS-123", "--area", "producer-only", "Short")
+	mustRun(t, "note", "--durable", "--thread", "thread-a", "--issue", "VS-123", "--area", "producer-only", "This note is long enough to exceed the tiny budget")
 
 	mustRun(t, "sync", "--thread", "thread-b", "--budget", "2")
 
@@ -372,7 +372,7 @@ func TestSyncBudgetCanOmitAllRelevantDirection(t *testing.T) {
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
 	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123")
-	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "Long enough to exceed one token")
+	mustRun(t, "note", "--durable", "--thread", "thread-a", "--issue", "VS-123", "Long enough to exceed one token")
 	mustRun(t, "sync", "--thread", "thread-b", "--budget", "1")
 
 	syncDelta := mustRead(t, syncPath)
@@ -403,7 +403,7 @@ func TestPreflightValidationAndParserBranches(t *testing.T) {
 		}
 	}
 
-	mustRun(t, "note", "--global", "Global direction")
+	mustRun(t, "note", "--durable", "--global", "Global direction")
 	mustRun(t, "preflight", "task", "--issue=VS-123", "--area=virtual-store/listing", "--budget=800")
 	assertContains(t, mustRead(t, taskPath), "- Repo-wide direction")
 }
@@ -423,8 +423,8 @@ func TestPreflightEnforcesBudget(t *testing.T) {
 	chdirTemp(t)
 
 	mustRun(t, "init")
-	mustRun(t, "note", "--global", "Short")
-	mustRun(t, "note", "--global", "This note is long enough to exceed the tiny budget")
+	mustRun(t, "note", "--durable", "--global", "Short")
+	mustRun(t, "note", "--durable", "--global", "This note is long enough to exceed the tiny budget")
 	mustRun(t, "preflight", "task", "--issue", "VS-123", "--budget", "2")
 
 	taskDirection := mustRead(t, taskPath)
@@ -437,7 +437,7 @@ func TestPreflightBudgetCanOmitAllRelevantDirection(t *testing.T) {
 	chdirTemp(t)
 
 	mustRun(t, "init")
-	mustRun(t, "note", "--global", "Long enough to exceed one token")
+	mustRun(t, "note", "--durable", "--global", "Long enough to exceed one token")
 	mustRun(t, "preflight", "task", "--issue", "VS-123", "--budget", "1")
 
 	taskDirection := mustRead(t, taskPath)
@@ -464,7 +464,7 @@ func TestExplainOutputBranches(t *testing.T) {
 
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123", "--area", "virtual-store/listing")
 	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123", "--area", "virtual-store/listing")
-	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "--area", "virtual-store/listing", "Use the existing endpoint")
+	mustRun(t, "note", "--durable", "--thread", "thread-a", "--issue", "VS-123", "--area", "virtual-store/listing", "Use the existing endpoint")
 
 	output := captureStdout(t, func() {
 		mustRun(t, "explain", "--issue", "VS-123")
@@ -481,4 +481,116 @@ func TestExplainOutputBranches(t *testing.T) {
 	})
 	assertContains(t, output, "Seen by:\n- thread-a\n- thread-b")
 	assertContains(t, output, "Stale:\n- (none)")
+}
+
+func TestNoteDurabilityFlagsAndMutualExclusion(t *testing.T) {
+	chdirTemp(t)
+
+	if err := Run([]string{"note", "--live", "--durable", "text"}); err == nil {
+		t.Fatal("note accepted both --live and --durable")
+	}
+	if err := Run([]string{"note", "--live", "--candidate", "text"}); err == nil {
+		t.Fatal("note accepted both --live and --candidate")
+	}
+	if err := Run([]string{"note", "--candidate", "--durable", "text"}); err == nil {
+		t.Fatal("note accepted both --candidate and --durable")
+	}
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
+
+	mustRun(t, "note", "--live", "Live direction")
+	events, err := loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Durability != DurabilityLive {
+		t.Fatalf("live event = %#v", events[0])
+	}
+
+	mustRun(t, "note", "--candidate", "Candidate direction")
+	events, err = loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 || events[1].Durability != DurabilityCandidate {
+		t.Fatalf("candidate event = %#v", events[1])
+	}
+
+	mustRun(t, "note", "--durable", "Durable direction")
+	events, err = loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 3 || events[2].Durability != DurabilityDurable {
+		t.Fatalf("durable event = %#v", events[2])
+	}
+}
+
+func TestNoteLiveNotPersistedToLocalLedger(t *testing.T) {
+	chdirTemp(t)
+	if err := os.Mkdir(".git", 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
+	mustRun(t, "note", "--live", "Live only direction")
+
+	if _, err := os.Stat(eventsPath); err == nil {
+		data := mustRead(t, eventsPath)
+		if strings.TrimSpace(data) != "" {
+			t.Fatalf("local ledger should be empty for live event, got %q", data)
+		}
+	}
+
+	sharedPath := ".git/" + sharedEventsRel
+	assertContains(t, mustRead(t, sharedPath), "Live only direction")
+
+	events, err := loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("loadEvents count = %d, want 1", len(events))
+	}
+}
+
+func TestPromoteCandidateToDurable(t *testing.T) {
+	chdirTemp(t)
+	if err := os.Mkdir(".git", 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
+	mustRun(t, "note", "--candidate", "Promote me")
+
+	events, err := loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Durability != DurabilityCandidate {
+		t.Fatalf("candidate event = %#v", events[0])
+	}
+
+	if err := Run([]string{"promote", "missing"}); err == nil {
+		t.Fatal("promote accepted unknown event id")
+	}
+
+	mustRun(t, "promote", events[0].ID)
+
+	events, err = loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Durability != DurabilityDurable {
+		t.Fatalf("promoted event = %#v", events[0])
+	}
+
+	sharedPath := ".git/" + sharedEventsRel
+	sharedData := mustRead(t, sharedPath)
+	if !strings.Contains(sharedData, `"durability":"durable"`) {
+		t.Fatalf("shared ledger did not reflect promotion: %s", sharedData)
+	}
 }

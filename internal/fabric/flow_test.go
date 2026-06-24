@@ -8,7 +8,7 @@ func TestDirectionPacketSyncsAcrossThreads(t *testing.T) {
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123", "--area", "virtual-store/listing")
 	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123", "--area", "virtual-store/listing")
-	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "--area", "virtual-store/listing", "Don't create a second listing endpoint; extend the existing one or escalate API direction")
+	mustRun(t, "note", "--durable", "--thread", "thread-a", "--issue", "VS-123", "--area", "virtual-store/listing", "Don't create a second listing endpoint; extend the existing one or escalate API direction")
 
 	events, err := loadEvents()
 	if err != nil {
@@ -49,7 +49,7 @@ func TestPreflightAcceptsTaskBeforeFlags(t *testing.T) {
 	chdirTemp(t)
 
 	mustRun(t, "init")
-	mustRun(t, "note", "--global", "Prefer the existing extension points before adding new surfaces")
+	mustRun(t, "note", "--durable", "--global", "Prefer the existing extension points before adding new surfaces")
 	mustRun(t, "preflight", "add filtering to virtual-store listing", "--issue", "VS-123", "--area", "virtual-store/listing", "--budget", "800")
 
 	taskDirection := mustRead(t, taskPath)
@@ -62,7 +62,7 @@ func TestPRReviewContinuationLifecycle(t *testing.T) {
 
 	mustRun(t, "init")
 	mustRun(t, "thread", "start", "--id", "thread-review-fix", "--issue", "VS-123", "--area", "file-opening")
-	mustRun(t, "note", "--issue", "VS-123", "--area", "file-opening", "Do not implement full Office preview unless the task is explicitly rescoped.")
+	mustRun(t, "note", "--durable", "--issue", "VS-123", "--area", "file-opening", "Do not implement full Office preview unless the task is explicitly rescoped.")
 
 	output := captureStdout(t, func() {
 		mustRun(t, "review", "note", "--pr", "123", "--issue", "VS-123", "--area", "file-opening", "Reviewer rejected picker-level Office special-casing; move unsupported file handling into the shared file-open resolver.")
