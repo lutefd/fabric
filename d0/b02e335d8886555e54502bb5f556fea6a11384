@@ -1,0 +1,356 @@
+AGENTS.md
+  s_99abcc89aab555::t_74c0129b7bd5c3 10
+  s_99abcc89aab555::t_a9941ee11ee9c9 16
+internal/cli/paths.go
+  s_99abcc89aab555::t_bc05395713e889 5,13
+  s_99abcc89aab555::t_8d0ce460023db7 1,6,14
+internal/cli/challenge.go
+  s_99abcc89aab555::t_34f679a5e9c88e 75,158
+  s_99abcc89aab555::t_d2eb3c4639ff24 84-87
+  s_99abcc89aab555::t_c89a19ba58953f 104,106-109
+  s_99abcc89aab555::t_e64d64ccce3c67 105
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-74,76-83,88-103,110-157,159-257
+internal/cli/flow_test.go
+  s_99abcc89aab555::t_620db027f1bef7 17,20,23,54,69-70
+  s_99abcc89aab555::t_0b8b75370e50c3 18
+  s_99abcc89aab555::t_8d0ce460023db7 1-16,19,21-22,24-53,55-68,71-77
+internal/cli/budget_test.go
+  s_99abcc89aab555::t_c1992259963517 12
+  s_99abcc89aab555::t_b1cc658b3948e4 7-9,19-20,25,40
+  s_99abcc89aab555::t_8d0ce460023db7 1-6,10-11,13-18,21-24,26-39,41-51
+internal/cli/templates.go
+  s_99abcc89aab555::t_9d62a4111290a4 7,15,19-20
+  s_99abcc89aab555::t_8d0ce460023db7 1-6,8-14,16,18,21-40
+  s_99abcc89aab555::t_c54cb4f1d98d5b 17
+.fabric/ledger/events/evt_019efb8f-234d-769e-9ac0-02cd9eb69f86.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+.fabric/ledger/events/evt_019efb8f-23c6-7aa1-881f-3a261a7b29bb.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/core/direction_protocol.go
+  s_99abcc89aab555::t_d3f1bdcf599465 61-63,65-67,71
+  s_99abcc89aab555::t_b7b72995bdabd9 22,34,45,54,120-121
+  s_99abcc89aab555::t_f822691c391f84 122
+  s_99abcc89aab555::t_aa1a0aaf816214 148,150,169,171
+  s_99abcc89aab555::t_14a00c6719c872 1-21,23,25-33,35-44,46-53,55-60,64,68-70,72-119,123-133,135-147,149,151-153,155-168,170,172-174,176-211
+  s_99abcc89aab555::t_e64d64ccce3c67 24,134,154,175
+internal/cli/app.go
+  s_99abcc89aab555::t_276da91e2dc927 169
+  s_99abcc89aab555::t_a9941ee11ee9c9 341
+  s_99abcc89aab555::t_da493eb8470746 12-14,148,198,218,223-224,226,231
+  s_99abcc89aab555::t_c89a19ba58953f 885
+  s_99abcc89aab555::t_9136074d001082 129
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1,19,64-71,112-115,130,168,360,362,367-371,373-374,386,389,392,410,412,414,451,456,459,464-465,489,497,501-503,508-514,517,621-624,638,644-649,652,698-701,744,752-753,760-761,766-777,782,786,794,802,805,809-821,826,830,836,843,920-922,924-925,927-928,932-949,961-963,965-967
+  s_99abcc89aab555::t_a610fa35893b30 546
+  s_99abcc89aab555::t_2ef819670aa752 887
+  s_99abcc89aab555::t_34f679a5e9c88e 591
+  s_99abcc89aab555::t_980d7884a23c64 629-634,676,686,712,715,739,857
+  s_99abcc89aab555::t_9dd881058ae46b 72-73,116
+  s_99abcc89aab555::t_d2eb3c4639ff24 519-522
+  s_99abcc89aab555::t_74c0129b7bd5c3 93-96,103-104,378-384
+internal/cli/context_command.go
+  s_99abcc89aab555::t_8d0ce460023db7 1-48
+internal/cli/model_alias.go
+  s_99abcc89aab555::t_228cfd6f557a6b 1-28
+internal/cli/conformance.go
+  s_99abcc89aab555::t_9dd881058ae46b 1-28,30-34,36-39,41-49,51-61,67-69
+  s_99abcc89aab555::t_197ada9467f5ad 62-66
+  s_99abcc89aab555::t_0b8b75370e50c3 40
+  s_99abcc89aab555::t_9136074d001082 29,35
+  s_99abcc89aab555::t_0d24030c4080cd 50
+.agents/skills/fabric-pr-direction/SKILL.md
+  s_99abcc89aab555::t_a9941ee11ee9c9 38
+cmd/fabric/main.go
+  s_99abcc89aab555::t_8d0ce460023db7 7,21-22
+  s_99abcc89aab555::t_6ebe3d7c3d5dd6 23-24
+internal/cli/app_test.go
+  s_99abcc89aab555::t_5f5854ac96dcd4 53
+  s_99abcc89aab555::t_4b7b16024746eb 84-85,272-275,298,336,356-357,406-409,437,447,622,626-629,662,673-676
+  s_99abcc89aab555::t_ac6b25e729519f 271,405,625,672
+  s_99abcc89aab555::t_0b8b75370e50c3 289,297
+  s_99abcc89aab555::t_a9941ee11ee9c9 36,170
+  s_99abcc89aab555::t_9136074d001082 270,286,296,440,621
+  s_99abcc89aab555::t_c89a19ba58953f 677
+  s_99abcc89aab555::t_c1992259963517 348,509
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-35,37-52,54-83,86-169,171-269,276-285,287-288,290-295,299-335,337-347,349-355,358-404,410-436,438-439,441-446,448-508,510-620,623-624,630-661,663-671,678-680
+internal/cli/budget.go
+  s_99abcc89aab555::t_8d0ce460023db7 1-2,5-12,14-20,37-44
+  s_99abcc89aab555::t_85391e4db37fd2 24-29
+  s_99abcc89aab555::t_83ac5c0545cc98 30-32
+  s_99abcc89aab555::t_c9a22639f721d6 3-4,13,21-23,33-36
+internal/cli/storage.go
+  s_99abcc89aab555::t_2ef819670aa752 14-15,399,402-403
+  s_99abcc89aab555::t_8d0ce460023db7 1,16,215,219-225,228,231-233,235-237,240,414
+  s_99abcc89aab555::t_42d0fe3f8b6d8a 50-51,100
+  s_99abcc89aab555::t_9136074d001082 434
+  s_99abcc89aab555::t_5dc749caa6ea43 200-202,204-206
+  s_99abcc89aab555::t_58be89eefde5f0 378-385
+  s_99abcc89aab555::t_c54cb4f1d98d5b 45
+  s_99abcc89aab555::t_7598762fbdfbad 397-398,400-401,404-409,412,416,419,422-426,428-430,432-433,435-436,439-440,444
+  s_99abcc89aab555::t_ac6b25e729519f 57,203,239
+.fabric/ledger/events/evt_019efb8f-239e-719c-acc5-292a500ff5c5.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+scripts/demo-v0-loop.sh
+  s_99abcc89aab555::t_0b8b75370e50c3 11-18
+README.md
+  s_99abcc89aab555::t_d1d5743b835c1c 3-5,7-10,16,18-20,22,24-27,29,31-34,36,38-41,43,45-48,50,52-55,57-60,62,64-74,76,78-79,81-82,84-85,87-88,90-91,93-95,97,99-103,105-108,110,113,116,128-129,131-132,134-135,137,140-141,143,146-187,190-192,194,196-204,207,209,211-215,217,219-221,223-225,227,229,231,233-236,238-239,285,287-292,294-296,298,301-302,305-306
+  s_99abcc89aab555::t_a9941ee11ee9c9 232
+  s_99abcc89aab555::t_26030dd8923f05 241,243-244,246-248,252,254-256,258,265-268
+  s_99abcc89aab555::t_0803d13e3e627a 270,272-279,281-283
+  s_99abcc89aab555::t_c2c581dc8eef49 249-251,259-263
+  s_99abcc89aab555::t_f682859cd3e402 12-14
+.fabric/ledger/events/evt_019efb8f-23da-77d8-be06-faccc7a222b6.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/cli/relation_command.go
+  s_99abcc89aab555::t_ced79571be8547 125,128-131,133,136,140-147,204-205,209-212,268-298,305-321,323-324,346-358,363-364
+  s_99abcc89aab555::t_b7b72995bdabd9 301-303,359-362
+  s_99abcc89aab555::t_8d0ce460023db7 1-16,19-21,23-36,42-81,88-124,127,132,138-139,148-203,322,325-339,365-372
+  s_99abcc89aab555::t_2a673c386eeda2 126
+  s_99abcc89aab555::t_c01138827cb79a 299-300,304
+  s_99abcc89aab555::t_c943c8a74b5b9f 134-135,137
+  s_99abcc89aab555::t_ac6b25e729519f 17-18,22
+  s_99abcc89aab555::t_b043536bb97311 37-41,82-87,206-208,213-267,340-345
+.fabric/ledger/events/evt_019efb8f-2419-7400-b8e7-21f77a96ddbf.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/cli/continuation.go
+  s_99abcc89aab555::t_74c0129b7bd5c3 49-55
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1,8-9,20,22,26-27,42-43,57,60-65,68-71
+.fabric/ledger/events/evt_019efb8f-240e-7bc6-93a6-983dd317750b.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-38
+.fabric/config.yaml
+  s_99abcc89aab555::t_74c0129b7bd5c3 12,14-15
+  s_99abcc89aab555::t_a610fa35893b30 9,11
+.agents/skills/fabric-session/SKILL.md
+  s_99abcc89aab555::t_a9941ee11ee9c9 12,14-16
+internal/store/ledger.go
+  s_99abcc89aab555::t_14a00c6719c872 1-33
+internal/cli/repository.go
+  s_99abcc89aab555::t_9136074d001082 17,28
+  s_99abcc89aab555::t_b043536bb97311 45-49
+  s_99abcc89aab555::t_b7b72995bdabd9 44,50
+  s_99abcc89aab555::t_14a00c6719c872 1-16,18-27,29-43,51-67
+internal/core/relevance_test.go
+  s_99abcc89aab555::t_68e3d50adf8551 18
+  s_99abcc89aab555::t_f4009d1bde37e4 1-17,19-24
+.fabric/ledger/events/evt_019efb8f-2457-7811-bcac-134511eab39b.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/cli/lifecycle_test.go
+  s_99abcc89aab555::t_c89a19ba58953f 112-113,120
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-111,114-119,121-179
+evals/run-local-v1.sh
+  s_99abcc89aab555::t_c1992259963517 40
+  s_99abcc89aab555::t_a6a03aa02cd0ce 18-19,22
+  s_99abcc89aab555::t_0803d13e3e627a 106-124
+  s_99abcc89aab555::t_1667cf2f0c82be 44,53-57,62-73,82
+  s_99abcc89aab555::t_282254cbc19ed5 20-21
+  s_99abcc89aab555::t_d4edf5e0a16e3d 9-17
+  s_99abcc89aab555::t_40459a111f46ce 1-8,23-39,41-43,45-49,52,83-105,125
+  s_99abcc89aab555::t_59db7ee7a815fe 50-51,58-61,74-81
+.fabric/ledger/events/evt_019efb8f-2393-7f28-abf1-e7177ab60251.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+internal/direction/repository.go
+  s_99abcc89aab555::t_35148ea39a58fd 14-16,34-36,48-50,56-60
+  s_99abcc89aab555::t_14a00c6719c872 1-13,17-32,38-47,51-55,61-79
+  s_99abcc89aab555::t_b7b72995bdabd9 33,37
+internal/cli/test_helpers_test.go
+  s_99abcc89aab555::t_2b82f91f4074f9 11-39,72-73
+  s_99abcc89aab555::t_4b7b16024746eb 6,40-71
+  s_99abcc89aab555::t_8d0ce460023db7 1-5,7-10,74-152
+.fabric/ledger/events/evt_019efb8f-23d0-7c7c-bfe5-73b7c72a5717.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+.fabric/ledger/events/evt_019efb8f-23ef-794c-a991-6ade6be4980c.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+.fabric/ledger/events/evt_019efb9a-ccae-7e92-8f5d-a0c78ee817bc.json
+  s_99abcc89aab555::t_a9a97730577f45 1-22
+.fabric/ledger/events/evt_019efb8f-23bc-7ebf-ae98-d3d80c9ed4b5.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+internal/store/files_test.go
+  s_99abcc89aab555::t_8364f0db861d89 1-4,8,10-13,20-21,28-30,37-50,95-96
+  s_99abcc89aab555::t_446e5a25611473 88-89
+  s_99abcc89aab555::t_96b57e57bd82c1 5-7,14-15,31-36,51-87,90-94
+  s_99abcc89aab555::t_8591abc3e8ba36 9,16-19,22-27
+.fabric/ledger/events/evt_019efb8f-246d-7aba-bee0-c359b4182ad0.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/cli/agent_skills_test.go
+  s_99abcc89aab555::t_a9941ee11ee9c9 31,59-62
+  s_99abcc89aab555::t_8d0ce460023db7 1-7,10,24-30,32-58,63-194,198-200,203,207-208
+  s_99abcc89aab555::t_b3be78d5401066 195-197,201-202,204-206
+  s_99abcc89aab555::t_9d2766e6ff435c 8-9,11-23
+internal/store/files.go
+  s_99abcc89aab555::t_eebef30356eb1b 22-23
+  s_99abcc89aab555::t_8364f0db861d89 1-21,24-120,123-148
+  s_99abcc89aab555::t_0d24030c4080cd 121-122
+.fabric/ledger/events/evt_019efb8f-23e4-745a-a3c0-cfaa4a5f41c1.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-55
+.fabric/ledger/events/evt_019efb8f-2388-7764-b1ec-13581c240ad7.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/cli/matching_test.go
+  s_99abcc89aab555::t_1474d8c0353c7e 54-74
+  s_99abcc89aab555::t_5f5854ac96dcd4 9-25
+  s_99abcc89aab555::t_8d0ce460023db7 1-8,26-33,39-45,47-53
+  s_99abcc89aab555::t_b1cc658b3948e4 34-38,46
+.fabric/ledger/events/evt_019efb8f-244d-7392-a397-c4dab28a1562.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-38
+internal/cli/lifecycle_projection_test.go
+  s_99abcc89aab555::t_a0c8efc1ae1657 1-23,39-86
+  s_99abcc89aab555::t_59db7ee7a815fe 24-38
+internal/core/materialize_test.go
+  s_99abcc89aab555::t_a0c8efc1ae1657 37-40
+  s_99abcc89aab555::t_8364f0db861d89 1-4,6-10,15-16,23-25,27-33,35-36,41
+  s_99abcc89aab555::t_8591abc3e8ba36 5,11-14,17-22,26,34
+  s_99abcc89aab555::t_b043536bb97311 42-65
+internal/cli/review_ingest.go
+  s_99abcc89aab555::t_d2eb3c4639ff24 160-163
+  s_99abcc89aab555::t_036bf9e2bb5b9c 9-10
+  s_99abcc89aab555::t_34f679a5e9c88e 173
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-8,11-127,133-159,164-172,174-176
+  s_99abcc89aab555::t_74c0129b7bd5c3 128-132
+.fabric/ledger/events/evt_019efb8f-2443-7ebe-aa74-7f1696771d03.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+.fabric/ledger/events/evt_019efb8f-2439-7ec9-9306-5cdd82e16b23.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+internal/store/runtime.go
+  s_99abcc89aab555::t_eebef30356eb1b 1-68
+internal/cli/markdown.go
+  s_99abcc89aab555::t_83ac5c0545cc98 17,23,95,115-129
+  s_99abcc89aab555::t_b7b72995bdabd9 33,51-67
+  s_99abcc89aab555::t_8d0ce460023db7 1,68-69,130-131,300-303,337-340
+.fabric/ledger/events/evt_019efb8f-2404-7918-9839-e4984715f3e1.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-36
+.fabric/ledger/events/evt_019efb8f-2364-7bba-8abd-dcbb273a8fdf.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+examples/listing-filter-flow.md
+  s_99abcc89aab555::t_0b8b75370e50c3 3,20
+evals/README.md
+  s_99abcc89aab555::t_40459a111f46ce 1-12
+scripts/demo-v2-challenge.sh
+  s_99abcc89aab555::t_0b8b75370e50c3 11-18,25-26,29,31
+.fabric/ledger/events/evt_019efb9a-cd11-71e6-b3f3-0b2782921a19.json
+  s_99abcc89aab555::t_a9a97730577f45 1-22
+.fabric/ledger/events/evt_019efb8f-2423-7f5f-b8b8-3bcabca4547d.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+internal/cli/command_errors_test.go
+  s_99abcc89aab555::t_9136074d001082 12
+  s_99abcc89aab555::t_92303c10a99a77 5,9-11,13-25,27-28,31,38,42,44,48-49,52,55,58-59,64-70,72-74
+  s_99abcc89aab555::t_8d0ce460023db7 1-4,6-8,26,29-30,32-37,39-41,43,45-47,50-51,53-54,56-57,60-63,71,75
+.gitignore
+  s_99abcc89aab555::t_74c0129b7bd5c3 8
+internal/core/graph.go
+  s_99abcc89aab555::t_68e3d50adf8551 3-4,6-8,47
+  s_99abcc89aab555::t_0a9fddaec690fa 1-2,5,9-46,48-49
+.fabric/ledger/events/evt_019efb8f-23a8-798f-9342-3cca271d9b37.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+internal/cli/runtime_store.go
+  s_99abcc89aab555::t_83ac5c0545cc98 322-324
+  s_99abcc89aab555::t_ac6b25e729519f 11
+  s_99abcc89aab555::t_eebef30356eb1b 4,25,29-33,37-44,50,52,55-56,60-64,67-82
+  s_99abcc89aab555::t_f822691c391f84 146,149-151,250,276,285-303,306-316
+  s_99abcc89aab555::t_8d0ce460023db7 1-3,5-10,12-24,26-28,34-36,45-49,51,53-54,57-59,65-66,83-145,147-148,152-249,251-275,277-284,304-305,317-321,325-341
+internal/cli/handoff.go
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-170
+internal/cli/lifecycle.go
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1,116-119,200,202-203
+  s_99abcc89aab555::t_34f679a5e9c88e 46,78,110,163
+internal/cli/util.go
+  s_99abcc89aab555::t_8d0ce460023db7 1-79
+internal/cli/config.go
+  s_99abcc89aab555::t_c54cb4f1d98d5b 1-53,70-72,74
+  s_99abcc89aab555::t_1474d8c0353c7e 54-69,73
+.fabric/ledger/events/evt_019efb8f-23b2-7cf3-8486-39e298e85e6d.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/cli/challenge_test.go
+  s_99abcc89aab555::t_eca101267d59ff 3,8-10,13,15-16,18,20-21,23,28-30,32-33,36,38-39,42-43,45-46,48-49,51-54,56-57,59-61,65,68-76
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-2,4-7,11-12,14,17,19,22,24-27,31,34-35,37,40-41,44,47,50,55,58,62-64,66-67,77-78
+internal/core/direction_protocol_test.go
+  s_99abcc89aab555::t_e8f2e1e8e8a7cd 1-28
+internal/core/model.go
+  s_99abcc89aab555::t_c01138827cb79a 17-36,40
+  s_99abcc89aab555::t_f822691c391f84 39
+  s_99abcc89aab555::t_b7b72995bdabd9 37-38
+  s_99abcc89aab555::t_74c0129b7bd5c3 67-73
+  s_99abcc89aab555::t_672fa64eb1282f 1-3,48,80
+internal/cli/storage_test.go
+  s_99abcc89aab555::t_9136074d001082 40
+  s_99abcc89aab555::t_8d0ce460023db7 1-39,42-44,46,48-103
+  s_99abcc89aab555::t_5f5854ac96dcd4 41,45,47
+internal/core/materialize.go
+  s_99abcc89aab555::t_b7b72995bdabd9 16-17,43-46,103-104
+  s_99abcc89aab555::t_f822691c391f84 18,72-82
+  s_99abcc89aab555::t_8364f0db861d89 1-15,19-42,47-71,83-102,105-113
+.fabric/ledger/events/evt_019efb8f-2463-7752-b3ea-602a3176fe53.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-38
+internal/cli/ingest.go
+  s_99abcc89aab555::t_8d0ce460023db7 1-302
+.agents/skills/fabric-record-direction/SKILL.md
+  s_99abcc89aab555::t_a9941ee11ee9c9 13,17
+.agents/skills/fabric-provenance/SKILL.md
+  s_99abcc89aab555::t_a9941ee11ee9c9 1-22
+.fabric/ledger/events/evt_019efb8f-23f9-7fb3-a1a9-a462a8da2bb0.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+.fabric/ledger/events/evt_019efb8f-237a-7df8-943c-fbe12bb25f69.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-37
+internal/cli/continuation_test.go
+  s_99abcc89aab555::t_c89a19ba58953f 63
+  s_99abcc89aab555::t_5f5854ac96dcd4 36-37
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-35,38-47,49-62,64-106
+  s_99abcc89aab555::t_c1992259963517 48
+internal/cli/provenance_test.go
+  s_99abcc89aab555::t_b043536bb97311 28-29,36,38,46-48
+  s_99abcc89aab555::t_3ee1b306fe217f 113
+  s_99abcc89aab555::t_a0c8efc1ae1657 26-27,40-45,49-50,67-79
+  s_99abcc89aab555::t_59db7ee7a815fe 19-20,37
+  s_99abcc89aab555::t_91fcd6cf78d26f 30-35
+  s_99abcc89aab555::t_140a14351ee0fb 1-18,21-25,39,51-66,80-112,114
+internal/cli/review_test.go
+  s_99abcc89aab555::t_59db7ee7a815fe 79
+  s_99abcc89aab555::t_c89a19ba58953f 82
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-78,80-81,83
+internal/cli/review.go
+  s_99abcc89aab555::t_d2eb3c4639ff24 68-71
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-62,64-67,72-97
+  s_99abcc89aab555::t_34f679a5e9c88e 63
+internal/cli/review_ingest_test.go
+  s_99abcc89aab555::t_8d9b3dfe1cb67c 1-422
+.agents/skills/fabric-provenance/agents/openai.yaml
+  s_99abcc89aab555::t_a9941ee11ee9c9 1-6
+internal/core/relevance.go
+  s_99abcc89aab555::t_f4009d1bde37e4 1-48,51-115
+  s_99abcc89aab555::t_83ac5c0545cc98 49-50
+.fabric/ledger/events/evt_019efb8f-242d-7d97-ab6e-84f7cab3a037.json
+  s_99abcc89aab555::t_824ea4ded5680c 1-29
+internal/cli/matching.go
+  s_99abcc89aab555::t_83ac5c0545cc98 111
+  s_99abcc89aab555::t_d2eb3c4639ff24 31-33,101-102,104
+  s_99abcc89aab555::t_8d0ce460023db7 1,3-5,8,14,16-19,24,36,52,54,57,59-62,67-79,83,91-94,96-97,103,109-110
+  s_99abcc89aab555::t_1474d8c0353c7e 53,55-56,58,114
+  s_99abcc89aab555::t_f4009d1bde37e4 7,80,112,115,117-119,121-122
+  s_99abcc89aab555::t_435f90beb4aa51 51
+internal/skills/templates.go
+  s_99abcc89aab555::t_9d62a4111290a4 1,6-7,23
+  s_99abcc89aab555::t_74c0129b7bd5c3 281
+  s_99abcc89aab555::t_489f953b0c18a1 2-5,8-12,14-22,24-30,38-91,93,97-98,125-140,142-144,146-188,190-280,282-286,288-297
+  s_99abcc89aab555::t_a9941ee11ee9c9 13,31-37,92,94-96,99-124,141,145,189,287
+internal/cli/output.go
+  s_99abcc89aab555::t_197ada9467f5ad 48-59,90,149-152,163-169,171
+  s_99abcc89aab555::t_26030dd8923f05 201-206,209
+  s_99abcc89aab555::t_59db7ee7a815fe 207-208
+  s_99abcc89aab555::t_8d0ce460023db7 1-47,60-89,91-148,153-162,170,172-198,200,210-216
+  s_99abcc89aab555::t_c943c8a74b5b9f 199
+internal/store/runtime_test.go
+  s_99abcc89aab555::t_4b2e8f7126768b 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "d0b02e335d8886555e54502bb5f556fea6a11384",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
