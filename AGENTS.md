@@ -46,6 +46,25 @@ Ignored:
 - .fabric/ledger/threads.jsonl
 - the git-common shared mirror (.git/fabric/events.jsonl)
 
+## PR review ingestion
+
+When PR review redirects implementation or contains important direction, do not leave that direction only inside the PR thread.
+
+Generate an ingest template:
+
+fabric ingest-pr template --pr "<pr>" --issue "<issue>" --area "<area>"
+
+Fill .fabric/generated/PR_REVIEW_INGEST.md with the review direction, then run:
+
+fabric ingest-pr --pr "<pr>" --issue "<issue>" --area "<area>" --from-file .fabric/generated/PR_REVIEW_INGEST.md
+
+Then run:
+
+fabric continue --pr "<pr>"
+fabric handoff --pr "<pr>"
+
+Review ingestion should usually create candidate direction, not durable project direction.
+
 When continuing PR/review work:
 - Run fabric continue --pr "<pr>".
 - Read .fabric/generated/CONTINUATION_CONTEXT.md.
