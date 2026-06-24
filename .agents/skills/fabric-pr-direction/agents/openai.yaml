@@ -1,0 +1,6 @@
+interface:
+  display_name: "Mine PR Direction"
+  short_description: "Extract reusable direction from GitHub PRs"
+  default_prompt: "Use $fabric-pr-direction to review this PR and stage reusable direction for approval."
+policy:
+  allow_implicit_invocation: true

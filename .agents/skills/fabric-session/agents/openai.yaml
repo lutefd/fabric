@@ -1,0 +1,6 @@
+interface:
+  display_name: "Fabric Session"
+  short_description: "Start and synchronize Fabric agent sessions"
+  default_prompt: "Use $fabric-session to prepare this repository task with the current Fabric direction."
+policy:
+  allow_implicit_invocation: true

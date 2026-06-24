@@ -1,122 +1,24 @@
 <!-- fabric:start -->
 # Direction Fabric Protocol
 
-Before starting work:
-- Run fabric status.
-- Run fabric preflight for the task.
-- Read .fabric/generated/TASK_DIRECTION.md.
+Fabric is the repository decision and provenance protocol for agent threads and worktrees. The CLI manages the protocol; agents are its primary clients.
 
-Direction events are shared repo state. Do not delete .fabric/ledger/events.jsonl or treat each worktree as isolated; sibling worktrees should hear relevant notes through Fabric.
+- Before work, run fabric status and fabric preflight, then read .fabric/generated/TASK_DIRECTION.md.
+- Before changing approach, opening a PR, or resuming work, run fabric sync and read .fabric/generated/SYNC_DELTA.md.
+- When corrected by a human, preserve the direction and rationale with Fabric.
+- Never silently violate active direction; align, ask for an exception, or record a challenge.
+- Treat .fabric/ledger/events.jsonl and the shared .git/fabric runtime as shared repository state.
+- If sandbox policy blocks .git/fabric, request scoped approval for the fabric command and retry. Do not create a fallback store.
 
-Before major checkpoints:
-- Run fabric sync.
-- Read .fabric/generated/SYNC_DELTA.md.
+Use the repository skills for detailed workflows:
 
-When corrected by the human:
-- Run fabric note "<direction>".
+- $fabric-session
+- $fabric-record-direction
+- $fabric-pr-direction
+- $fabric-consolidate
+- $fabric-publish, only for explicitly requested GitHub writes
 
-Direction has three tiers:
-- live: shared across active worktrees now, not persisted to the durable ledger
-- candidate: probably important, but needs review before becoming durable
-- durable: long-term project guidance, committed to .fabric/ledger/events.jsonl
+If these skills are unavailable, run fabric install-agents. It installs the managed fabric-* skills globally under ~/.agents/skills and refreshes this repository protocol without changing unrelated user skills.
 
-For interactive use, run fabric note and choose the durability.
-For agent use (non-interactive), prefer:
-  fabric note --candidate "<direction>"
-unless the human explicitly says it is temporary or durable.
-
-Promote a candidate later:
-  fabric promote <event-id>
-
-Check ledger health:
-  fabric doctor
-
-Git hygiene rule:
-  Commit project direction, not agent runtime state.
-
-Tracked:
-- AGENTS.md
-- .fabric/config.yaml
-- .fabric/skills/**
-- .fabric/ledger/events.jsonl (candidate/durable project direction only)
-
-Ignored:
-- .fabric/active/**
-- .fabric/generated/**
-- .fabric/ledger/threads.jsonl
-- the git-common shared mirror (.git/fabric/events.jsonl)
-
-## PR review ingestion
-
-When PR review redirects implementation or contains important direction, do not leave that direction only inside the PR thread.
-
-Generate an ingest template:
-
-fabric ingest-pr template --pr "<pr>" --issue "<issue>" --area "<area>"
-
-Fill .fabric/generated/PR_REVIEW_INGEST.md with the review direction, then run:
-
-fabric ingest-pr --pr "<pr>" --issue "<issue>" --area "<area>" --from-file .fabric/generated/PR_REVIEW_INGEST.md
-
-Then run:
-
-fabric continue --pr "<pr>"
-fabric handoff --pr "<pr>"
-
-Review ingestion should usually create candidate direction, not durable project direction.
-
-When continuing PR/review work:
-- Run fabric continue --pr "<pr>".
-- Read .fabric/generated/CONTINUATION_CONTEXT.md.
-
-When PR review redirects the implementation, record it explicitly:
-
-fabric review note --pr "<pr>" --issue "<issue>" --area "<area>" "<review direction>"
-
-If your planned approach conflicts with active direction, do not silently proceed.
-
-Choose one:
-
-1. Align with existing direction
-2. Ask for a scoped exception
-3. Record a challenge
-
-To record a challenge, run:
-
-fabric challenge \
-  --direction "<event-id>" \
-  --issue "<issue>" \
-  --pr "<pr>" \
-  --area "<area>" \
-  --proposal "<new proposed path>" \
-  --reason "<why the existing direction may not apply>"
-
-Read:
-
-.fabric/generated/CHALLENGE.md
-
-Mention the challenge in the PR or handoff.
-
-## Consolidation after PR/issue completion
-
-When a PR is merged, closed, or the issue is done, run:
-
-fabric consolidate --pr "<pr>"
-
-or:
-
-fabric consolidate --issue "<issue>"
-
-Read:
-
-.fabric/generated/CONSOLIDATION.md
-
-Review candidate directions and choose:
-
-- promote: reusable project direction
-- expire: useful during the task, no longer active
-- discard: not useful direction / too noisy / too specific
-- keep candidate: review later
-
-Do not promote every review comment. Durable project direction should be scarce.
+Commit AGENTS.md, .agents/skills/**, .fabric/config.yaml, and candidate/durable ledger direction. Do not commit generated checkpoints, thread state, or the Git-common runtime mirror.
 <!-- fabric:end -->

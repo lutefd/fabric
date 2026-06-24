@@ -6,7 +6,7 @@
 # - AGENTS.md
 # - .fabric/config.yaml
 # - .fabric/ledger/events.jsonl (candidate/durable project direction only)
-# - .fabric/skills/**/SKILL.md
+# - .agents/skills/**
 #
 # Keep per-thread local state, generated checkpoints, and the git-common
 # shared mirror out of Git.

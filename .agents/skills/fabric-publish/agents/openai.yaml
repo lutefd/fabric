@@ -1,0 +1,6 @@
+interface:
+  display_name: "Publish Fabric Context"
+  short_description: "Publish approved Fabric context to GitHub"
+  default_prompt: "Use $fabric-publish to preview and publish the approved Fabric handoff to GitHub."
+policy:
+  allow_implicit_invocation: false

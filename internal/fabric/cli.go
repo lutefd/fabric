@@ -6,9 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
+
+const repoAgentSkillsRoot = ".agents/skills"
 
 func Run(args []string) error {
 	if len(args) == 0 {
@@ -108,13 +111,6 @@ func runInit(args []string) error {
 		".fabric/ledger",
 		".fabric/active/issues",
 		".fabric/generated",
-		".fabric/skills/preflight",
-		".fabric/skills/sync",
-		".fabric/skills/note",
-		".fabric/skills/continue",
-		".fabric/skills/challenge",
-		".fabric/skills/pr-review-ingest",
-		".fabric/skills/consolidate-after-merge",
 	}
 	for _, dir := range dirs {
 		if err := mkdirAll(dir); err != nil {
@@ -132,13 +128,6 @@ func runInit(args []string) error {
 		{path: configPath, content: defaultConfig(repo)},
 		{path: eventsPath, touch: true},
 		{path: threadsPath, touch: true},
-		{path: ".fabric/skills/preflight/SKILL.md", content: preflightSkill()},
-		{path: ".fabric/skills/sync/SKILL.md", content: syncSkill()},
-		{path: ".fabric/skills/note/SKILL.md", content: noteSkill()},
-		{path: ".fabric/skills/continue/SKILL.md", content: continueSkill()},
-		{path: ".fabric/skills/challenge/SKILL.md", content: challengeSkill()},
-		{path: ".fabric/skills/pr-review-ingest/SKILL.md", content: prReviewIngestSkill()},
-		{path: ".fabric/skills/consolidate-after-merge/SKILL.md", content: consolidateAfterMergeSkill()},
 		{path: agentsPath, content: agentsSnippet(), update: true},
 	}
 	for _, file := range files {
@@ -154,6 +143,9 @@ func runInit(args []string) error {
 			return err
 		}
 	}
+	if err := installAgentSkills(repoAgentSkillsRoot, false); err != nil {
+		return err
+	}
 	if err := mirrorLocalEventsToShared(); err != nil {
 		return err
 	}
@@ -163,7 +155,7 @@ func runInit(args []string) error {
 	fmt.Println("Created ledger/events.jsonl")
 	fmt.Println("Created ledger/threads.jsonl")
 	fmt.Println("Created generated/")
-	fmt.Println("Created skills/")
+	fmt.Println("Created .agents/skills/")
 	return nil
 }
 
@@ -176,10 +168,50 @@ func runInstallAgents(args []string) error {
 	if err := ensureInitialized(); err != nil {
 		return err
 	}
+	if err := installAgentSkills(repoAgentSkillsRoot, true); err != nil {
+		return err
+	}
+	globalSkillsRoot, err := globalAgentSkillsRoot()
+	if err != nil {
+		return err
+	}
+	if err := installAgentSkills(globalSkillsRoot, true); err != nil {
+		return err
+	}
 	if err := installRootAgentsFile("AGENTS.md", rootAgentsBlock()); err != nil {
 		return err
 	}
 	fmt.Println("Installed Direction Fabric protocol in AGENTS.md")
+	fmt.Printf("Installed Direction Fabric skills globally in %s\n", globalSkillsRoot)
+	return nil
+}
+
+func globalAgentSkillsRoot() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".agents", "skills"), nil
+}
+
+func installAgentSkills(root string, update bool) error {
+	for _, dir := range agentSkillDirs() {
+		if err := mkdirAll(filepath.Join(root, dir)); err != nil {
+			return err
+		}
+	}
+	for _, file := range agentSkillFiles() {
+		path := filepath.Join(root, file.path)
+		if update {
+			if err := writeFile(path, file.content); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := writeFileIfMissing(path, file.content); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

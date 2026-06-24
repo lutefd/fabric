@@ -9,6 +9,7 @@ import (
 
 func chdirTemp(t *testing.T) {
 	t.Helper()
+	t.Setenv("HOME", t.TempDir())
 	previous, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)

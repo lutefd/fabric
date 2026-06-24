@@ -32,13 +32,17 @@ func TestInitIsIdempotentAndWritesTemplates(t *testing.T) {
 	mustRun(t, "init")
 
 	assertContains(t, mustRead(t, configPath), `repo: `)
-	assertContains(t, mustRead(t, ".fabric/skills/preflight/SKILL.md"), "Fabric Preflight")
-	assertContains(t, mustRead(t, ".fabric/skills/sync/SKILL.md"), "Fabric Sync")
-	assertContains(t, mustRead(t, ".fabric/skills/note/SKILL.md"), "Fabric Note")
-	assertContains(t, mustRead(t, ".fabric/skills/continue/SKILL.md"), "Fabric Continue")
-	assertContains(t, mustRead(t, ".fabric/skills/challenge/SKILL.md"), "Fabric Challenge")
+	assertContains(t, mustRead(t, ".agents/skills/fabric-session/SKILL.md"), "name: fabric-session")
+	assertContains(t, mustRead(t, ".agents/skills/fabric-record-direction/SKILL.md"), "name: fabric-record-direction")
+	assertContains(t, mustRead(t, ".agents/skills/fabric-pr-direction/SKILL.md"), "name: fabric-pr-direction")
+	assertContains(t, mustRead(t, ".agents/skills/fabric-consolidate/SKILL.md"), "name: fabric-consolidate")
+	assertContains(t, mustRead(t, ".agents/skills/fabric-publish/SKILL.md"), "name: fabric-publish")
+	assertContains(t, mustRead(t, ".agents/skills/fabric-publish/agents/openai.yaml"), "allow_implicit_invocation: false")
 	assertContains(t, mustRead(t, agentsPath), "fabric sync")
-	assertContains(t, mustRead(t, agentsPath), "fabric challenge")
+	assertContains(t, mustRead(t, agentsPath), "$fabric-pr-direction")
+	if _, err := os.Stat(".fabric/skills"); !os.IsNotExist(err) {
+		t.Fatalf("legacy .fabric/skills should not be generated, stat error = %v", err)
+	}
 
 	if err := runInit([]string{"--bad"}); err == nil {
 		t.Fatal("runInit accepted an unknown flag")
@@ -164,6 +168,7 @@ func TestAgentProtocolUsesCurrentThreadAndRootAgentsFile(t *testing.T) {
 	assertContains(t, agents, fabricBlockStart)
 	assertContains(t, agents, "fabric status")
 	assertContains(t, agents, "fabric sync")
+	assertContains(t, agents, "$fabric-session")
 	assertContains(t, agents, fabricBlockEnd)
 
 	if err := os.WriteFile("AGENTS.md", []byte("User notes before\n\n"+agents+"\nUser notes after\n"), 0o644); err != nil {
@@ -173,7 +178,7 @@ func TestAgentProtocolUsesCurrentThreadAndRootAgentsFile(t *testing.T) {
 	updatedAgents := mustRead(t, "AGENTS.md")
 	assertContains(t, updatedAgents, "User notes before")
 	assertContains(t, updatedAgents, "User notes after")
-	assertContains(t, updatedAgents, "fabric continue --pr")
+	assertContains(t, updatedAgents, "$fabric-pr-direction")
 	if got := strings.Count(updatedAgents, fabricBlockStart); got != 1 {
 		t.Fatalf("fabric start markers = %d, want 1", got)
 	}

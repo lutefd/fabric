@@ -1,0 +1,6 @@
+interface:
+  display_name: "Record Fabric Direction"
+  short_description: "Preserve corrections and project direction"
+  default_prompt: "Use $fabric-record-direction to preserve this correction for related agent threads."
+policy:
+  allow_implicit_invocation: true
