@@ -8,50 +8,53 @@ We keep treating it as a prompting problem, a model problem, or a documentation
 problem. Often it is something more ordinary and more embarrassing: the
 organization learned, but the work did not inherit the learning.
 
-This article grew out of a conversation between two engineers at a large
-technology company. The scene below is a composite; names, project details, and
-internal context have been removed or changed. The failure itself is real.
+This article grew out of a familiar kind of engineering conversation. The story
+below is deliberately synthetic: it combines recurring patterns, changes the
+technical domain, and does not reproduce any private project or exchange.
 
-## A Conversation About Forgetting
+## A Story About Forgetting
 
-One engineer asked whether the trouble around AI-assisted development was
-really coordination debt.
+Imagine a mature platform that has one shared boundary for translating data
+from external systems. The boundary is not perfect, but it exists for a reason:
+every caller should observe the same normalization, validation, and failure
+semantics.
 
-The answer was immediate: coordination and alignment were part of it, but the
-company did not lack either. Teams held discussions. Leads set direction.
-Reviewers explained tradeoffs. The problem was that the next person often did
-not follow what had been decided. Everyone arrived ready to own the problem and
-build a version in their own image.
+A new feature needs one extra field. An engineer opens a pull request that
+translates the field inside the feature handler. The code works. It is tidy. It
+even has tests. A reviewer asks for the translation to live at the shared
+boundary instead, explains the consistency problem, and points to an earlier
+incident caused by having two interpretations of the same input. The PR changes
+direction and merges.
 
-Then came a painfully mundane example. A team had built a complete listing
-endpoint. Someone later asked whether the results could be filtered. Instead of
-extending the endpoint whose job was already to list those resources, another
-implementation proposed a second listing endpoint with filters.
+Weeks later, another task reaches the same edge from a different package. Its
+agent sees the code, the ticket, and the local tests. It does not see the old
+review. It proposes another feature-specific translation helper. A second agent,
+working in parallel, proposes extending a third path because that one is closer
+to its current file. Both solutions are locally reasonable. Both reopen a
+decision the project has already paid to make.
 
-Nothing about this was technically difficult. The project had a focus. The
-ownership boundary already existed. The team had already paid for the design
-conversation. Yet the next unit of work behaved as if none of that had happened.
+Now zoom out. The project has coordination. Maintainers discuss architecture.
+Reviewers explain tradeoffs. Teams write plans. Yet later work still cannot
+answer basic questions: Why does this behavior belong here? Which alternative
+was rejected? Was the rejection general or limited to one migration? Who made
+the call, and what evidence would justify revisiting it?
 
-The conversation moved to pull requests. One engineer said he could open some
-PRs and understand what changed, but not why anyone was doing it. Sometimes a
-constraint had been explained in another PR and a later change still pushed the
-rejected idea through a side door. There was no visible learning between
-attempts.
+This is where the usual diagnosis becomes too shallow. Calling it a lack of
+alignment suggests another meeting. Calling it a documentation problem suggests
+another page. Calling it poor agent prompting suggests a longer instruction
+file. None of those ensures that the next unit of work receives the relevant
+decision at the moment it chooses an approach.
 
-That used to happen less often. People absorbed a project's style through
-review. They saw the same maintainers reject the same class of mistake, learned
-the local boundaries, and gradually stopped proposing it. The learning was
-imperfect and social, but it accumulated.
+Before agents, some of this knowledge accumulated socially. Contributors read
+reviews, recognized maintainers' recurring concerns, and slowly learned the
+project's local instincts. It was unreliable, but people carried fragments of
+history from one task to the next.
 
-Now more execution happens inside agents. Each thread is a disposable artifact.
-Unless somebody explicitly tells the next thread that approach X was rejected
-in discussion Y, it does not know. Add parallel worktrees and several agents,
-and the same bad proposal can appear three times before the first correction has
-left its original conversation.
-
-The irony was hard to miss: people were starting to work like stateless agent
-threads, while agent threads inherited the oldest organizational failure of all.
-Neither side had reliable memory of why the project had chosen its direction.
+Agent execution breaks that accidental memory. Each thread begins with the
+context assembled for that run. Unless the rejected path and its rationale are
+deliberately carried forward, the next thread is free to rediscover it. Parallel
+work makes the repetition faster and less visible: several polished local
+solutions can diverge from the same project decision at once.
 
 ## We Keep Paying for the Same Decision
 
