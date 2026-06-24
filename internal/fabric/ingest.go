@@ -3,7 +3,6 @@ package fabric
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -69,7 +68,7 @@ func parseIngestFile(content string) (IngestFile, error) {
 		if strings.TrimSpace(currentItem.ReviewSays) != "" {
 			ingest.Items = append(ingest.Items, *currentItem)
 		} else {
-			ingest.Warnings = append(ingest.Warnings, fmt.Sprintf("skipped direction item with no 'Review says'"))
+			ingest.Warnings = append(ingest.Warnings, "skipped direction item with no 'Review says'")
 		}
 		currentItem = nil
 	}
