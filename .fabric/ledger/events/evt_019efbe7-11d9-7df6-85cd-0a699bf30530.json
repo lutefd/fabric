@@ -1,0 +1,29 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efbe7-11d9-7df6-85cd-0a699bf30530",
+  "event_type": "relation.created",
+  "occurred_at": "2026-06-24T20:11:25.145137-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "codex-release-v0.1.0"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "relation": {
+      "relation_id": "rel_019efbe7-11c3-7f5c-887d-dbbe01e95a78",
+      "type": "derived_from",
+      "from": {
+        "kind": "record",
+        "id": "rec_019efbe7-11c3-7d35-8e8d-ed864238f290"
+      },
+      "to": {
+        "kind": "thread",
+        "id": "codex-release-v0.1.0"
+      },
+      "created_at": "2026-06-24T20:11:25.123143-03:00"
+    }
+  }
+}

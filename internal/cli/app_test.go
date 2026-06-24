@@ -164,7 +164,8 @@ func TestAgentProtocolUsesCurrentThreadAndRootAgentsFile(t *testing.T) {
 
 	agents := mustRead(t, "AGENTS.md")
 	assertContains(t, agents, fabricBlockStart)
-	assertContains(t, agents, "fabric status")
+	assertContains(t, agents, "Before substantive multi-step implementation")
+	assertContains(t, agents, "Skip session setup for read-only inspection")
 	assertContains(t, agents, "fabric sync")
 	assertContains(t, agents, "$fabric-session")
 	assertContains(t, agents, "$fabric-provenance")

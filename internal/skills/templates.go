@@ -24,9 +24,9 @@ func Files() []File {
 		{Path: "fabric-session/SKILL.md", Content: fabricSessionSkill()},
 		{Path: "fabric-session/agents/openai.yaml", Content: skillOpenAIYAML(
 			"Fabric Session",
-			"Start and synchronize Fabric agent sessions",
-			"Use $fabric-session to prepare this repository task with the current Fabric direction.",
-			true,
+			"Sync direction for substantive repository work",
+			"Use $fabric-session to prepare this multi-step repository implementation with shared Fabric direction.",
+			false,
 		)},
 		{Path: "fabric-provenance/SKILL.md", Content: fabricProvenanceSkill()},
 		{Path: "fabric-provenance/agents/openai.yaml", Content: skillOpenAIYAML(
@@ -80,22 +80,24 @@ policy:
 func fabricSessionSkill() string {
 	return `---
 name: fabric-session
-description: Initialize, resume, and synchronize Fabric agent threads. Use before starting repository work, resuming a PR or issue, changing approach, opening a PR, or checking for new project direction shared by other threads and worktrees.
+description: Prepare and synchronize Fabric threads for substantive, multi-step repository changes that may depend on shared direction. Use when beginning or resuming implementation, changing an implementation approach, continuing review-driven code work, or when the user explicitly asks to synchronize Fabric. Do not use for read-only inspection, simple questions, release or tag creation, one-off git or gh commands, or routine status checks.
 ---
 
 # Fabric Session
 
-Use Fabric as the repository decision protocol before acting.
+Use Fabric when the work can create or consume repository direction. Skip this
+workflow entirely for read-only inspection and one-off operational commands. A
+stale or unknown current-thread pointer alone is not a reason to create a thread.
 
-1. Run fabric status. If sandbox policy blocks access to .git/fabric, request scoped approval for the fabric command and retry. Do not use another runtime store.
-2. If there is no suitable current thread, run fabric thread start with the known PR, issue, and areas.
-3. Run fabric preflight with the task and the same scope. Use --json when a provider adapter needs the projection ID. Read .fabric/generated/TASK_DIRECTION.md.
+1. For substantive work, run fabric status once. If sandbox policy blocks access to .git/fabric, request scoped approval for that command and retry. Do not use another runtime store.
+2. If the ongoing implementation needs shared state and there is no suitable thread, run fabric thread start with the known issue, PR, areas, and paths.
+3. Run fabric preflight "<task>" with matching --issue, --pr, --area, and --path flags before implementation. Use --json only when an adapter needs the projection ID. Read .fabric/generated/TASK_DIRECTION.md.
 4. Follow active direction. If the planned approach conflicts, use $fabric-record-direction to record a challenge instead of silently diverging.
 5. After projected records actually enter model context, use $fabric-provenance to acknowledge exposure. Delivery alone is not exposure.
-6. Before changing approach, opening a PR, or resuming later, run fabric sync and read .fabric/generated/SYNC_DELTA.md.
-7. When continuing PR or issue work, run fabric continue and read .fabric/generated/CONTINUATION_CONTEXT.md.
+6. Run fabric sync before a meaningful implementation checkpoint, approach change, or explicit handoff. Do not sync after every command. Read .fabric/generated/SYNC_DELTA.md.
+7. Use fabric continue only when resuming interrupted or review-driven PR/issue implementation. Read .fabric/generated/CONTINUATION_CONTEXT.md.
 
-Treat shared findings, rationale, rejected paths, and preferred paths as inputs to the current thread, not as optional background.
+Keep user updates proportional to the task; do not narrate routine Fabric plumbing. Treat shared findings, rationale, rejected paths, and preferred paths as inputs to substantive work.
 `
 }
 
@@ -274,8 +276,9 @@ func RootAgentsProtocol() string {
 
 Fabric is the repository decision and provenance protocol for agent threads and worktrees. The CLI manages the protocol; agents are its primary clients.
 
-- Before work, run fabric status and fabric preflight, then read .fabric/generated/TASK_DIRECTION.md.
-- Before changing approach, opening a PR, or resuming work, run fabric sync and read .fabric/generated/SYNC_DELTA.md.
+- Before substantive multi-step implementation, use $fabric-session to inspect shared direction.
+- Skip session setup for read-only inspection, simple questions, release or tag creation, and one-off git or gh commands.
+- Before a meaningful implementation checkpoint, approach change, or handoff, run fabric sync and read .fabric/generated/SYNC_DELTA.md.
 - When corrected by a human, preserve the direction and rationale with Fabric.
 - Never silently violate active direction; align, ask for an exception, or record a challenge.
 - Treat .fabric/ledger/events/ and the shared .git/fabric runtime as shared repository state.

@@ -1,0 +1,38 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efbe7-11c3-7b64-a99f-08960840bca9",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T20:11:25.123141-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "codex-release-v0.1.0"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efbe7-11c3-7d35-8e8d-ed864238f290",
+      "kind": "note",
+      "created_at": "2026-06-24T20:11:25-03:00",
+      "scope": {
+        "repo": "fabric",
+        "areas": [
+          "agent-protocol"
+        ],
+        "global": true
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "codex-release-v0.1.0"
+      },
+      "text": "Fabric session workflows must be selective: skip read-only inspection, simple questions, release or tag creation, and one-off git or gh commands; a stale current-thread pointer alone does not justify creating a thread or running preflight.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "candidate",
+      "reason": "Overeager session setup obscures simple tasks and creates unnecessary thread/runtime state."
+    }
+  }
+}

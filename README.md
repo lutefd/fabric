@@ -259,7 +259,7 @@ resolved by last writer.
 
 Repository skills under `.agents/skills/` adapt agents to the protocol:
 
-- `fabric-session`: discovery, preflight, sync, and continuation.
+- `fabric-session`: shared direction for substantive multi-step implementation.
 - `fabric-provenance`: exposure receipts, causal assertions, and explanation.
 - `fabric-record-direction`: corrections, rationale, and challenges.
 - `fabric-pr-direction`: bounded PR mining with approval before ingestion.
