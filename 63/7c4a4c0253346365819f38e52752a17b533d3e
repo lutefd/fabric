@@ -1,0 +1,27 @@
+docs/why-fabric-exists.md
+  s_e35cfdcf98def0::t_be7a3f4548650c 11-57
+  s_e35cfdcf98def0::t_5b34836c1bf983 100-134
+  s_e35cfdcf98def0::t_490188b286799e 3-10,58-92
+  s_e35cfdcf98def0::t_17de0a4d92afa2 135-175,190-225
+  s_e35cfdcf98def0::t_cb1528809cdab9 176-183,185-189,226-230,331-336,339-351,354
+  s_e35cfdcf98def0::t_6c019c9ad9f757 184,337-338,352-353
+README.md
+  s_e35cfdcf98def0::t_422b38ec537277 31-36
+  s_e35cfdcf98def0::t_2a11808507b4bd 12-16,21-29,42-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "637c4a4c0253346365819f38e52752a17b533d3e",
+  "prompts": {},
+  "sessions": {
+    "s_e35cfdcf98def0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efbbd-9951-7b90-aaac-d2b72e6cacb5",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
