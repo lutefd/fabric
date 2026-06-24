@@ -1,0 +1,38 @@
+internal/cli/output.go
+  s_99abcc89aab555::t_9b0cc17e9353d6 15
+cmd/fabric/main.go
+  s_99abcc89aab555::t_9b0cc17e9353d6 20
+internal/cli/provenance_test.go
+  s_99abcc89aab555::t_f3e99b1a34ebb6 108,113
+main.go
+  s_99abcc89aab555::t_9b0cc17e9353d6 1-13
+evals/run-local-v1.sh
+  s_99abcc89aab555::t_9b0cc17e9353d6 21
+scripts/demo-v0-loop.sh
+  s_99abcc89aab555::t_9b0cc17e9353d6 17
+README.md
+  s_99abcc89aab555::t_0f35bed4b3e104 18-25,137-138,141,144-145
+  s_99abcc89aab555::t_9b0cc17e9353d6 140,150,310-311
+scripts/demo-v2-challenge.sh
+  s_99abcc89aab555::t_9b0cc17e9353d6 17
+internal/cli/execute.go
+  s_99abcc89aab555::t_9b0cc17e9353d6 1-17
+internal/cli/execute_test.go
+  s_99abcc89aab555::t_9b0cc17e9353d6 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "5e60dd9f89d64a3469d27c37118065da3772e9c4",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
