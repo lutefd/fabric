@@ -7,17 +7,22 @@ const (
 )
 
 type DirectionEvent struct {
-	ID         string      `json:"id"`
-	Kind       string      `json:"kind"`
-	CreatedAt  string      `json:"created_at"`
-	Scope      EventScope  `json:"scope"`
-	Source     EventSource `json:"source"`
-	Text       string      `json:"text"`
-	Confidence string      `json:"confidence"`
-	TTL        string      `json:"ttl"`
-	Challenges string      `json:"challenges,omitempty"`
-	Status     string      `json:"status,omitempty"`
-	Durability string      `json:"durability,omitempty"`
+	ID             string        `json:"id"`
+	Kind           string        `json:"kind"`
+	CreatedAt      string        `json:"created_at"`
+	Scope          EventScope    `json:"scope"`
+	Source         EventSource   `json:"source"`
+	Text           string        `json:"text"`
+	Confidence     string        `json:"confidence"`
+	TTL            string        `json:"ttl"`
+	Challenges     string        `json:"challenges,omitempty"`
+	Status         string        `json:"status,omitempty"`
+	Durability     string        `json:"durability,omitempty"`
+	ReviewType     string        `json:"review_type,omitempty"`
+	Reason         string        `json:"reason,omitempty"`
+	RejectedPaths  []string      `json:"rejected_paths,omitempty"`
+	PreferredPaths []string      `json:"preferred_paths,omitempty"`
+	Evidence       []EvidenceRef `json:"evidence,omitempty"`
 }
 
 type EventScope struct {
@@ -32,6 +37,14 @@ type EventSource struct {
 	Type     string `json:"type"`
 	ThreadID string `json:"thread_id,omitempty"`
 	PR       string `json:"pr,omitempty"`
+	URL      string `json:"url,omitempty"`
+}
+
+type EvidenceRef struct {
+	Type   string `json:"type,omitempty"`
+	URL    string `json:"url,omitempty"`
+	Author string `json:"author,omitempty"`
+	Text   string `json:"text,omitempty"`
 }
 
 type ThreadRecord struct {
