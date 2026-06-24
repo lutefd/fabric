@@ -43,6 +43,10 @@ func Run(args []string) error {
 		return runExplain(args[1:])
 	case "doctor":
 		return runDoctor(args[1:])
+	case "ingest-pr":
+		return runIngestPR(args[1:])
+	case "handoff":
+		return runHandoff(args[1:])
 	case "help", "-h", "--help":
 		printUsage()
 		return nil
@@ -72,6 +76,10 @@ Usage:
 	fabric explain --issue VS-123
 	fabric explain --pr 123
 	fabric doctor
+	fabric ingest-pr template --pr 123 --issue VS-123 --area review-ingest
+	fabric ingest-pr --pr 123 --issue VS-123 --area review-ingest --from-file review.md
+	fabric ingest-pr --pr 123 --issue VS-123 --area review-ingest --stdin < review.md
+	fabric handoff --pr 123 --budget 900
 `)
 }
 
@@ -91,6 +99,7 @@ func runInit(args []string) error {
 		".fabric/skills/note",
 		".fabric/skills/continue",
 		".fabric/skills/challenge",
+		".fabric/skills/pr-review-ingest",
 	}
 	for _, dir := range dirs {
 		if err := mkdirAll(dir); err != nil {
@@ -113,6 +122,7 @@ func runInit(args []string) error {
 		{path: ".fabric/skills/note/SKILL.md", content: noteSkill()},
 		{path: ".fabric/skills/continue/SKILL.md", content: continueSkill()},
 		{path: ".fabric/skills/challenge/SKILL.md", content: challengeSkill()},
+		{path: ".fabric/skills/pr-review-ingest/SKILL.md", content: prReviewIngestSkill()},
 		{path: agentsPath, content: agentsSnippet(), update: true},
 	}
 	for _, file := range files {

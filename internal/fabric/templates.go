@@ -76,6 +76,42 @@ If planned work conflicts with active direction, record the explicit dispute wit
 `
 }
 
+func prReviewIngestSkill() string {
+	return `# PR Review Ingest Skill
+
+Use this when review feedback redirects implementation, rejects a path, prefers another path, or creates requirements that future/follow-up agents must know.
+
+Do not ingest every review nit.
+
+Good candidates:
+- reviewer rejected an approach
+- reviewer preferred a specific implementation direction
+- reviewer clarified scope
+- reviewer identified the correct layer/module
+- reviewer explicitly said not to repeat something
+- review feedback affects future/follow-up threads
+
+Usually avoid:
+- spelling fixes
+- formatting nits
+- one-line local cleanup
+- temporary CI flakes
+- comments that do not change what another agent should do next
+
+Default:
+- review direction -> candidate
+- temporary review checklist item -> live
+
+After ingesting, run:
+
+fabric continue --pr "<pr>"
+
+Read:
+
+.fabric/generated/CONTINUATION_CONTEXT.md
+`
+}
+
 func agentsSnippet() string {
 	return rootAgentsProtocol()
 }
@@ -132,6 +168,25 @@ Ignored:
 - .fabric/ledger/threads.jsonl
 - the git-common shared mirror (.git/fabric/events.jsonl)
 
+## PR review ingestion
+
+When PR review redirects implementation or contains important direction, do not leave that direction only inside the PR thread.
+
+Generate an ingest template:
+
+fabric ingest-pr template --pr "<pr>" --issue "<issue>" --area "<area>"
+
+Fill .fabric/generated/PR_REVIEW_INGEST.md with the review direction, then run:
+
+fabric ingest-pr --pr "<pr>" --issue "<issue>" --area "<area>" --from-file .fabric/generated/PR_REVIEW_INGEST.md
+
+Then run:
+
+fabric continue --pr "<pr>"
+fabric handoff --pr "<pr>"
+
+Review ingestion should usually create candidate direction, not durable project direction.
+
 When continuing PR/review work:
 - Run fabric continue --pr "<pr>".
 - Read .fabric/generated/CONTINUATION_CONTEXT.md.
@@ -172,5 +227,7 @@ func generatedFiles() []string {
 		syncPath,
 		continuePath,
 		challengePath,
+		ingestTemplatePath,
+		handoffPath,
 	}
 }
