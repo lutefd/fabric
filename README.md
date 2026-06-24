@@ -9,22 +9,39 @@ threads receive the relevant subset before acting; and lets a later user trace
 an agent action back through the records, evidence, review, and human direction
 that actually informed it.
 
-Read the normative [protocol specification](PROTOCOL.md), the reference
-[conformance claim](CONFORMANCE.md), and the deliberately deferred
-[private service design](SERVICE.md).
+Start with the essay [Why Fabric Exists](docs/why-fabric-exists.md) for the
+coordination problem, large-project story, and OSS evidence behind the protocol.
+Then read the normative [protocol specification](PROTOCOL.md), the reference
+[conformance claim](CONFORMANCE.md), and the deliberately deferred [private
+service design](SERVICE.md).
 
 ## Why We Need This
 
 The bottleneck in multi-agent development is not only model intelligence or
-context-window size. It is that the repository has no shared memory layer for
-why work took a particular path.
+context-window size. Large projects already spend human time deciding ownership,
+rejecting plausible approaches, and explaining local constraints. Then the next
+person or agent starts without that history and pays for the same decision
+again.
+
+This is not always a lack of coordination. Sometimes the meeting happened, the
+review was clear, and the project direction was reasonable. The failure is that
+later work cannot see what was decided, where it applies, or why a rejected path
+should stay rejected. More parallel agents make that failure faster.
+
+We saw the same shape in a bounded public sample of 100 recently merged
+`vercel/next.js` PRs: 200 of 234 top-level comments were automated, and only 29
+of 311 submitted reviews contained body text. In three detailed PRs, the useful
+direction was scattered across descriptions, commits, and inline threads. The
+[full essay](docs/why-fabric-exists.md#what-a-small-oss-sample-revealed) explains
+the method, examples, and limitations.
 
 ### Decisions are trapped in conversations
 
 A human corrects thread A. Thread B, running in a sibling worktree, keeps the old
 assumption. A PR reviewer redirects thread C, but thread D sees only the final
-diff. Every additional parallel context adds execution capacity and another
-place for repository direction to diverge.
+diff. A feature area extends an existing abstraction while another thread
+quietly invents a duplicate. Every additional parallel context adds execution
+capacity and another place for repository direction to diverge.
 
 ### Git preserves results, not causality
 
