@@ -46,6 +46,13 @@ func assertContains(t *testing.T, haystack, needle string) {
 	}
 }
 
+func assertNotContains(t *testing.T, haystack, needle string) {
+	t.Helper()
+	if strings.Contains(haystack, needle) {
+		t.Fatalf("expected %q not to contain %q", haystack, needle)
+	}
+}
+
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
 	old := os.Stdout

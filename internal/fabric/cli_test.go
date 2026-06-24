@@ -137,6 +137,47 @@ func TestSyncValidationAndNoUpdates(t *testing.T) {
 	assertContains(t, mustRead(t, syncPath), "No new relevant direction")
 }
 
+func TestSyncEnforcesBudgetAndUsesThreadScopeForApplicability(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123", "--area", "producer-only")
+	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123")
+	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "--area", "producer-only", "Short")
+	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "--area", "producer-only", "This note is long enough to exceed the tiny budget")
+
+	mustRun(t, "sync", "--thread", "thread-b", "--budget", "2")
+
+	syncDelta := mustRead(t, syncPath)
+	assertContains(t, syncDelta, "1. Short")
+	assertContains(t, syncDelta, budgetOmittedMessage)
+	assertContains(t, syncDelta, "- Same issue: VS-123")
+	assertNotContains(t, syncDelta, "- Same area: producer-only")
+
+	threads, err := loadThreads()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := threads["thread-b"].LastSeenEventID; got != "evt_000002" {
+		t.Fatalf("thread-b last seen = %q, want evt_000002", got)
+	}
+}
+
+func TestSyncBudgetCanOmitAllRelevantDirection(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
+	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "VS-123")
+	mustRun(t, "note", "--thread", "thread-a", "--issue", "VS-123", "Long enough to exceed one token")
+	mustRun(t, "sync", "--thread", "thread-b", "--budget", "1")
+
+	syncDelta := mustRead(t, syncPath)
+	assertContains(t, syncDelta, "No direction included within the current budget.")
+	assertContains(t, syncDelta, budgetOmittedMessage)
+	assertContains(t, syncDelta, "Source:\n(none included)")
+}
+
 func TestPreflightValidationAndParserBranches(t *testing.T) {
 	chdirTemp(t)
 
@@ -172,6 +213,33 @@ func TestPreflightWithNoActiveDirection(t *testing.T) {
 
 	taskDirection := mustRead(t, taskPath)
 	assertContains(t, taskDirection, "No active direction found.")
+	assertContains(t, taskDirection, "Scope match:\n- None")
+}
+
+func TestPreflightEnforcesBudget(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	mustRun(t, "note", "--global", "Short")
+	mustRun(t, "note", "--global", "This note is long enough to exceed the tiny budget")
+	mustRun(t, "preflight", "task", "--issue", "VS-123", "--budget", "2")
+
+	taskDirection := mustRead(t, taskPath)
+	assertContains(t, taskDirection, "1. Short")
+	assertContains(t, taskDirection, budgetOmittedMessage)
+	assertNotContains(t, taskDirection, "This note is long enough")
+}
+
+func TestPreflightBudgetCanOmitAllRelevantDirection(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	mustRun(t, "note", "--global", "Long enough to exceed one token")
+	mustRun(t, "preflight", "task", "--issue", "VS-123", "--budget", "1")
+
+	taskDirection := mustRead(t, taskPath)
+	assertContains(t, taskDirection, "No direction included within the current budget.")
+	assertContains(t, taskDirection, budgetOmittedMessage)
 	assertContains(t, taskDirection, "Scope match:\n- None")
 }
 

@@ -5,27 +5,42 @@ import (
 	"strings"
 )
 
-func syncMarkdown(threadID string, events []DirectionEvent) string {
+const budgetOmittedMessage = "Some relevant direction was omitted because the budget was reached.\nRun with --budget N to include more."
+
+func syncMarkdown(thread ThreadRecord, events []DirectionEvent, omitted bool) string {
 	var b strings.Builder
 	fmt.Fprintln(&b, "# Sync Delta")
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "Thread:")
-	fmt.Fprintln(&b, threadID)
+	fmt.Fprintln(&b, thread.ThreadID)
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "New relevant direction since last sync:")
 	fmt.Fprintln(&b)
-	for i, event := range events {
-		fmt.Fprintf(&b, "%d. %s\n", i+1, event.Text)
+	if len(events) == 0 {
+		fmt.Fprintln(&b, "No direction included within the current budget.")
+	} else {
+		for i, event := range events {
+			fmt.Fprintf(&b, "%d. %s\n", i+1, event.Text)
+		}
 	}
+	writeBudgetOmission(&b, omitted)
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "Source:")
-	for _, event := range events {
-		fmt.Fprintf(&b, "Human note from related thread %s.\n", emptyAsUnknown(event.Source.ThreadID))
+	if len(events) == 0 {
+		fmt.Fprintln(&b, "(none included)")
+	} else {
+		for _, event := range events {
+			fmt.Fprintf(&b, "Human note from related thread %s.\n", emptyAsUnknown(event.Source.ThreadID))
+		}
 	}
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "Why it applies:")
-	for _, event := range events {
-		writeReasonLines(&b, event, "", nil)
+	if len(events) == 0 {
+		fmt.Fprintln(&b, "(none included)")
+	} else {
+		for _, event := range events {
+			writeReasonLines(&b, event, thread.Issue, thread.Areas)
+		}
 	}
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "Next action:")
@@ -43,7 +58,7 @@ No new relevant direction for this thread.
 `, threadID)
 }
 
-func preflightMarkdown(task, issue string, areas []string, events []DirectionEvent) string {
+func preflightMarkdown(task, issue string, areas []string, events []DirectionEvent, omitted bool) string {
 	var b strings.Builder
 	fmt.Fprintln(&b, "# Task Direction")
 	fmt.Fprintln(&b)
@@ -52,13 +67,16 @@ func preflightMarkdown(task, issue string, areas []string, events []DirectionEve
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "Relevant direction:")
 	fmt.Fprintln(&b)
-	if len(events) == 0 {
+	if len(events) == 0 && omitted {
+		fmt.Fprintln(&b, "No direction included within the current budget.")
+	} else if len(events) == 0 {
 		fmt.Fprintln(&b, "No active direction found.")
 	} else {
 		for i, event := range events {
 			fmt.Fprintf(&b, "%d. %s\n", i+1, event.Text)
 		}
 	}
+	writeBudgetOmission(&b, omitted)
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "Scope match:")
 	if len(events) == 0 {
@@ -73,6 +91,14 @@ func preflightMarkdown(task, issue string, areas []string, events []DirectionEve
 	fmt.Fprintln(&b, "- Follow this direction unless the task explicitly requires challenging it.")
 	fmt.Fprintln(&b, "- Do not silently implement a conflicting approach.")
 	return b.String()
+}
+
+func writeBudgetOmission(b *strings.Builder, omitted bool) {
+	if !omitted {
+		return
+	}
+	fmt.Fprintln(b)
+	fmt.Fprintln(b, budgetOmittedMessage)
 }
 
 func printExplain(issue string, areas []string, events []DirectionEvent, threads map[string]ThreadRecord) error {
@@ -110,13 +136,6 @@ func printExplain(issue string, areas []string, events []DirectionEvent, threads
 
 func writeReasonLines(b *strings.Builder, event DirectionEvent, issue string, areas []string) {
 	reason := reasonFor(event, issue, areas)
-	if issue == "" && len(areas) == 0 {
-		reason = matchReason{
-			Issue:  event.Scope.Issue != "",
-			Areas:  event.Scope.Areas,
-			Global: event.Scope.Global,
-		}
-	}
 	if reason.Global {
 		fmt.Fprintln(b, "- Repo-wide direction")
 	}

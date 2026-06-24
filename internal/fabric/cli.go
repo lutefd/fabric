@@ -242,7 +242,6 @@ func runSync(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	_ = budget
 	if *threadID == "" {
 		return errors.New("sync requires --thread")
 	}
@@ -267,8 +266,9 @@ func runSync(args []string) error {
 		fmt.Printf("No new relevant direction for %s.\n", *threadID)
 		return nil
 	}
+	capped, omitted := capEventsByBudget(matches, *budget)
 
-	markdown := syncMarkdown(*threadID, matches)
+	markdown := syncMarkdown(thread, capped, omitted)
 	if err := writeFile(syncPath, markdown); err != nil {
 		return err
 	}
@@ -285,7 +285,6 @@ func runPreflight(args []string) error {
 	if err != nil {
 		return err
 	}
-	_ = budget
 	task := strings.TrimSpace(strings.Join(taskParts, " "))
 	if task == "" {
 		return errors.New("preflight requires task text")
@@ -298,7 +297,8 @@ func runPreflight(args []string) error {
 	if err != nil {
 		return err
 	}
-	markdown := preflightMarkdown(task, issue, areas, relevantEvents(events, issue, areas))
+	capped, omitted := capEventsByBudget(relevantEvents(events, issue, areas), budget)
+	markdown := preflightMarkdown(task, issue, areas, capped, omitted)
 	if err := writeFile(taskPath, markdown); err != nil {
 		return err
 	}

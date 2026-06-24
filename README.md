@@ -13,39 +13,56 @@ Human corrects Thread A
 -> Thread B avoids the same wrong path
 ```
 
-The command is `fabric`. The thing it records is direction.
+The command is `fabric`. The object it records is direction.
 
-## Install locally
+## Demo
+
+Build the CLI:
 
 ```bash
 go build -o fabric ./cmd/fabric
 ```
 
-## Quickstart
+Run the V0 validation loop:
 
 ```bash
 fabric init
-
-fabric thread start \
-  --id thread-a \
-  --issue VS-123 \
-  --area virtual-store/listing
-
-fabric thread start \
-  --id thread-b \
-  --issue VS-123 \
-  --area virtual-store/listing
-
-fabric note \
-  --thread thread-a \
-  --issue VS-123 \
-  --area virtual-store/listing \
-  "Don't create a second listing endpoint; extend the existing one or escalate API direction"
-
+fabric thread start --id thread-a --issue VS-123 --area virtual-store/listing
+fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
+fabric note --thread thread-a --issue VS-123 --area virtual-store/listing "Don't create a second listing endpoint; extend the existing one or escalate API direction"
 fabric sync --thread thread-b --budget 300
 ```
 
-## Repo-local files
+Or run the demo script from a scratch directory:
+
+```bash
+scripts/demo-v0-loop.sh
+```
+
+Expected sync delta:
+
+```md
+# Sync Delta
+
+Thread:
+thread-b
+
+New relevant direction since last sync:
+
+1. Don't create a second listing endpoint; extend the existing one or escalate API direction
+
+Source:
+Human note from related thread thread-a.
+
+Why it applies:
+- Same issue: VS-123
+- Same area: virtual-store/listing
+
+Next action:
+Adjust your plan before continuing.
+```
+
+## Repo-local Files
 
 `fabric init` creates:
 
@@ -83,5 +100,5 @@ fabric explain --issue VS-123
 ## Test
 
 ```bash
-go test ./...
+go test -cover ./...
 ```
