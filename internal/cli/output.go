@@ -12,7 +12,7 @@ import (
 	"github.com/lutefd/fabric/protocol"
 )
 
-const CLIVersion = "1.0.0-local"
+const CLIVersion = "0.1.0"
 
 var resultState struct {
 	sync.Mutex

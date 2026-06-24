@@ -15,6 +15,14 @@ Then read the normative [protocol specification](PROTOCOL.md), the reference
 [conformance claim](CONFORMANCE.md), and the deliberately deferred [private
 service design](SERVICE.md).
 
+## Status
+
+`v0.1.0` is the first public release of the local-first Fabric protocol and
+reference CLI. The immutable event ledger, shared worktree runtime, deterministic
+projections, exposure receipts, causal explanation graph, conformance fixtures,
+and managed agent skills are implemented. The optional private relay remains a
+future design and is not required for local operation.
+
 ## Why We Need This
 
 The bottleneck in multi-agent development is not only model intelligence or
@@ -126,14 +134,20 @@ explicit approval.
 
 ## Install
 
+Fabric requires Go 1.22 or newer.
+
 ```bash
-go install ./cmd/fabric
+go install github.com/lutefd/fabric@v0.1.0
+fabric version
 ```
+
+Go installs the binary into `$(go env GOPATH)/bin` by default. Ensure that
+directory is on `PATH` before invoking `fabric`.
 
 Or build locally:
 
 ```bash
-go build -o fabric ./cmd/fabric
+go build -o fabric .
 ```
 
 ## Quick Start
@@ -293,7 +307,8 @@ the explicit causal relation.
 - `internal/direction/`: repository operations that compose core and storage.
 - `internal/skills/`: provider skill templates and installation sources.
 - `internal/cli/`: command parsing plus human/JSON rendering.
-- `cmd/fabric/`: the executable entry point.
+- `main.go`: the installable executable entry point; `cmd/fabric/` remains a
+  compatible local entry point.
 
 Protocol and repository behavior do not depend on CLI parsing, and storage does
 not own domain semantics. A future encrypted transport can implement the public

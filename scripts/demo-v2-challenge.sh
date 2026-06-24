@@ -14,7 +14,7 @@ if [[ -z "${go_bin}" && -x /usr/local/go/bin/go ]]; then
 fi
 (
   cd "${repo_root}"
-  GOCACHE="${workspace}/gocache" "${go_bin}" build -o "${binary}" ./cmd/fabric
+  GOCACHE="${workspace}/gocache" "${go_bin}" build -o "${binary}" .
 )
 
 (

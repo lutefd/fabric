@@ -105,10 +105,12 @@ func TestMachineCapabilitiesAndLedgerConformance(t *testing.T) {
 	mustRun(t, "note", "--candidate", "--global", "Protocol direction")
 
 	output := captureStdout(t, func() {
+		mustRun(t, "version", "--json")
 		mustRun(t, "capabilities", "--json")
 		mustRun(t, "conformance", "--json")
 	})
 	assertContains(t, output, `"protocol_version":"fabric/1.0"`)
+	assertContains(t, output, `"cli_version":"0.1.0"`)
 	assertContains(t, output, `"output_formats":["human","json"]`)
 	assertContains(t, output, `"valid":1`)
 }

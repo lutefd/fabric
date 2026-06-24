@@ -18,7 +18,7 @@ fi
 (
   cd "${repo_root}"
   GOCACHE="${workspace}/gocache" GOMODCACHE="${workspace}/gomodcache" \
-    "${go_bin}" build -o "${binary}" ./cmd/fabric
+    "${go_bin}" build -o "${binary}" .
 )
 
 cd "${workspace}"
