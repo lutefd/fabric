@@ -1,0 +1,37 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-23ef-794c-a991-6ade6be4980c",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.607704-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1707"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-23ef-7f16-aab2-df7ad696f597",
+      "kind": "note",
+      "created_at": "2026-06-24T17:07:15-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-4",
+        "areas": [
+          "consolidation"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "thread_20260624_1707"
+      },
+      "text": "V4 closes the Fabric lifecycle by reviewing candidate/live/review/challenge direction after PR or issue completion and promoting only useful lessons into durable project direction.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "durable"
+    }
+  }
+}

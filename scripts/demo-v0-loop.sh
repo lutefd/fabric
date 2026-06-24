@@ -8,7 +8,14 @@ binary="${workspace}/fabric"
 echo "Demo workspace: ${workspace}"
 echo
 
-GOCACHE="${workspace}/gocache" GOMODCACHE="${workspace}/gomodcache" go build -o "${binary}" "${repo_root}/cmd/fabric"
+go_bin="${GO:-$(command -v go || true)}"
+if [[ -z "${go_bin}" && -x /usr/local/go/bin/go ]]; then
+  go_bin=/usr/local/go/bin/go
+fi
+(
+  cd "${repo_root}"
+  GOCACHE="${workspace}/gocache" "${go_bin}" build -o "${binary}" ./cmd/fabric
+)
 
 (
   cd "${workspace}"

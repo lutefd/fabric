@@ -1,0 +1,38 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-244d-7392-a397-c4dab28a1562",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.701978-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "codex_protocol_spec_20260624"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-244d-7e6d-8488-46420c8a886e",
+      "kind": "note",
+      "created_at": "2026-06-24T18:18:41-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-1",
+        "areas": [
+          "agent-protocol",
+          "ledger-safety"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "codex_protocol_spec_20260624"
+      },
+      "text": "Fabric Local V1 may use a one-time manual migration and clean cutover from the legacy JSONL ledger because Fabric currently has one user; do not preserve indefinite mixed-writer or old-client compatibility when it complicates immutable protocol correctness.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "candidate"
+    }
+  }
+}

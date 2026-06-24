@@ -5,11 +5,10 @@
 # Track durable repo protocol and direction:
 # - AGENTS.md
 # - .fabric/config.yaml
-# - .fabric/ledger/events.jsonl (candidate/durable project direction only)
+# - .fabric/ledger/events/** (candidate/durable project direction only)
 # - .agents/skills/**
 #
 # Keep per-thread local state, generated checkpoints, and the git-common
 # shared mirror out of Git.
 .fabric/active/
 .fabric/generated/
-.fabric/ledger/threads.jsonl

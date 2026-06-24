@@ -35,6 +35,6 @@ Skip nits, formatting, local cleanup, transient CI failures, raw transcripts, an
 
 5. Present a numbered proposal list in chat. Do not ingest before the user selects items.
 6. Remove unapproved items, repeat the dry run, then run the same command without --dry-run.
-7. Run fabric continue and report created event IDs.
+7. Run fabric continue and report created record IDs.
 
 For bounded historical seeding, repeat per PR so work can resume after partial failure. Finish with accepted, skipped, and failed PR counts. Mining never comments on or edits GitHub.

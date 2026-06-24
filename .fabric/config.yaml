@@ -6,10 +6,13 @@ budgets:
 matching:
   issue_overlap: true
   area_overlap: true
+  path_overlap: true
   pr_overlap: true
+areas: {}
+protocol_version: "fabric/1.0"
 storage:
-  events: ".fabric/ledger/events.jsonl"
-  threads: ".fabric/ledger/threads.jsonl"
+  events: ".fabric/ledger/events"
+  threads: ".git/fabric/runtime/threads"
 generated:
   task_direction: ".fabric/generated/TASK_DIRECTION.md"
   sync_delta: ".fabric/generated/SYNC_DELTA.md"

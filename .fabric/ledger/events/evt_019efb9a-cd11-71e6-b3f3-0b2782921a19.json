@@ -1,0 +1,22 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb9a-cd11-71e6-b3f3-0b2782921a19",
+  "event_type": "record.state_changed",
+  "occurred_at": "2026-06-24T18:48:06.801842-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1538"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "parent_event_id": "evt_019efb8f-2393-7f28-abf1-e7177ab60251",
+  "payload": {
+    "record_id": "rec_019efb8f-2393-7b5a-8be1-1a9d4e9cf6eb",
+    "status": "expired",
+    "durability": "durable",
+    "lifecycle_reason": "Superseded by the immutable per-event ledger and Git-common events/runtime directories.",
+    "reviewed_at": "2026-06-24T18:48:06-03:00"
+  }
+}

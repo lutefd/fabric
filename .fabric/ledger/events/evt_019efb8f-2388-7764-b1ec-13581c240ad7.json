@@ -1,0 +1,29 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-2388-7764-b1ec-13581c240ad7",
+  "event_type": "relation.created",
+  "occurred_at": "2026-06-24T18:35:22.504454-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1538"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "relation": {
+      "relation_id": "rel_019efb8f-237a-7567-b6e9-eab787d4e013",
+      "type": "derived_from",
+      "from": {
+        "kind": "record",
+        "id": "rec_019efb8f-237a-7509-a2d2-ad8147ea7b66"
+      },
+      "to": {
+        "kind": "thread",
+        "id": "thread_20260624_1538"
+      },
+      "created_at": "2026-06-24T18:35:22.490125-03:00"
+    }
+  }
+}

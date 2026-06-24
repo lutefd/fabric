@@ -1,0 +1,38 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-240e-7bc6-93a6-983dd317750b",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.638963-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "codex_protocol_spec_20260624"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-240e-7248-92d2-fc9d5860b0a7",
+      "kind": "note",
+      "created_at": "2026-06-24T18:04:56-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-5",
+        "areas": [
+          "agent-protocol",
+          "distribution"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "codex_protocol_spec_20260624"
+      },
+      "text": "fabric install-agents must install the managed Fabric skills globally for the current user under ~/.agents/skills, while preserving unrelated user skills. Repo-local skill copies remain reviewable protocol sources, but install-agents is responsible for making the workflows available to the user's agent across repositories.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "durable"
+    }
+  }
+}

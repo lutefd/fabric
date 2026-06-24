@@ -1,0 +1,37 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-23d0-7c7c-bfe5-73b7c72a5717",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.57657-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1652"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-23d0-7136-9ea7-205adc17e847",
+      "kind": "note",
+      "created_at": "2026-06-24T16:52:25-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-3",
+        "areas": [
+          "review-ingest"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "thread_20260624_1652"
+      },
+      "text": "V3 is manual PR/review ingestion. It should create candidate review directions from explicit review feedback and feed continue/handoff context before adding GitHub App/webhooks.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "durable"
+    }
+  }
+}

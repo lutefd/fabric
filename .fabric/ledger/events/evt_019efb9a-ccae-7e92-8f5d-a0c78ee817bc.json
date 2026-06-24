@@ -1,0 +1,22 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb9a-ccae-7e92-8f5d-a0c78ee817bc",
+  "event_type": "record.state_changed",
+  "occurred_at": "2026-06-24T18:48:06.702182-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1538"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "parent_event_id": "evt_019efb8f-234d-769e-9ac0-02cd9eb69f86",
+  "payload": {
+    "record_id": "rec_019efb8f-234d-75ab-a769-2cec24ecd785",
+    "status": "expired",
+    "durability": "durable",
+    "lifecycle_reason": "Local V1 now provides root discovery, current-thread defaults, status, preflight, sync, and note workflows.",
+    "reviewed_at": "2026-06-24T18:48:06-03:00"
+  }
+}

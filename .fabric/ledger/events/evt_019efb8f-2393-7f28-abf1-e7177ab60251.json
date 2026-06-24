@@ -1,0 +1,37 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-2393-7f28-abf1-e7177ab60251",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.515302-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1538"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-2393-7b5a-8be1-1a9d4e9cf6eb",
+      "kind": "note",
+      "created_at": "2026-06-24T15:48:46-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-1",
+        "areas": [
+          "agent-protocol"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "thread_20260624_1538"
+      },
+      "text": "Fabric now uses a git-common shared event mirror so sibling worktrees can see new direction before the durable .fabric/ledger/events.jsonl changes are committed; local current-thread and generated checkpoint files remain per-worktree state.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "durable"
+    }
+  }
+}

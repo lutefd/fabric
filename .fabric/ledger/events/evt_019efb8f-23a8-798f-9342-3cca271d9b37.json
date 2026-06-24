@@ -1,0 +1,37 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-23a8-798f-9342-3cca271d9b37",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.53645-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1623"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-23a8-7cf4-a5f4-8400261d7fb7",
+      "kind": "note",
+      "created_at": "2026-06-24T16:23:37-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-2",
+        "areas": [
+          "ledger-safety"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "thread_20260624_1623"
+      },
+      "text": "Before adding more lifecycle features, Fabric must harden shared ledger safety: concurrent writes, event ID uniqueness, promotion safety, and ledger health checks.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "durable"
+    }
+  }
+}

@@ -1,375 +1,306 @@
 # Fabric
 
-Fabric is a provider-neutral repository decision and provenance protocol, with a small reference CLI for disposable agent threads. It records the decisions, findings, and constraints that should survive a conversation, then surfaces the relevant subset to each thread at the right time.
+Fabric is a provider-neutral protocol for persistent repository decisions and
+causal provenance across agent threads, worktrees, and tools. The `fabric` CLI
+is its local reference client.
 
-The command is `fabric`. Its protocol unit is a scoped **record**; the current storage model calls it a **direction event**.
+It lets one thread preserve a correction, finding, or decision once; lets other
+threads receive the relevant subset before acting; and lets a later user trace
+an agent action back through the records, evidence, review, and human direction
+that actually informed it.
 
-Fabric is agent-first: agents are the primary protocol clients, and the CLI manages the repo-local protocol state. Provider skills adapt Codex and other agents to that protocol while Fabric remains independent from GitHub connectors and LLM providers.
+Read the normative [protocol specification](PROTOCOL.md), the reference
+[conformance claim](CONFORMANCE.md), and the deliberately deferred
+[private service design](SERVICE.md).
 
-The interoperable data model, matching rules, synchronization behavior, and provider contract are defined in [PROTOCOL.md](PROTOCOL.md).
+## Why We Need This
 
-## Why Fabric
+The bottleneck in multi-agent development is not only model intelligence or
+context-window size. It is that the repository has no shared memory layer for
+why work took a particular path.
 
-The hard problem is not that an individual agent lacks enough context. It is that repository knowledge is fragmented across contexts that start, stop, and run concurrently.
+### Decisions are trapped in conversations
 
-A human corrects one thread, a reviewer redirects another, and a third thread starts fresh with no memory of either. One worktree discovers an architectural constraint while a sibling worktree continues down the rejected path. The code eventually records *what* was changed, but the reason for the choice remains trapped in a conversation or PR comment.
+A human corrects thread A. Thread B, running in a sibling worktree, keeps the old
+assumption. A PR reviewer redirects thread C, but thread D sees only the final
+diff. Every additional parallel context adds execution capacity and another
+place for repository direction to diverge.
 
-This creates four recurring failures.
+### Git preserves results, not causality
 
-### Decisions do not travel
+Commits are excellent at showing what changed. They rarely encode the full
+reason an endpoint was extended instead of duplicated, which alternatives were
+rejected, what hidden constraint another thread found, or whose direction made
+the choice authoritative.
 
-Agent conversations, code review threads, issue comments, and worktrees are separate memory islands. A decision made in one is usually invisible to the others until a human repeats it. Parallel agent work increases the cost: adding threads creates more execution capacity while also creating more places for direction to diverge.
+### Transcripts are the wrong memory primitive
 
-### Handoffs lose rationale
+Archiving every prompt and reply creates a large, provider-owned, private corpus
+without identifying what future work should do differently. Replaying it wastes
+context and still leaves causality ambiguous. Fabric stores a sparse set of
+curated records and opaque links, never the conversation itself.
 
-Ordinary summaries preserve the latest state but often discard why an approach was selected, which alternatives were rejected, and what evidence changed the plan. The next agent can continue the code, but it cannot reliably distinguish an intentional constraint from an accidental implementation detail.
+### Delivery is not proof of influence
 
-### Repositories repeat mistakes
+Even when a decision was present in context, that does not prove the agent used
+it. Fabric records projections and exposure receipts separately from explicit
+`informed_by` and `implements` relations. This makes explanations honest:
+"available to the model" and "declared as causal" are different facts.
 
-Without curated memory, each fresh thread can reopen a path already rejected in review, rediscover the same hidden constraint, or ask the human the same question. Transcripts are too large and noisy to use as project memory; they preserve everything without identifying what should change future behavior.
+### Repository memory must outlive providers
 
-### Agent choices are difficult to explain
+Codex, Claude, an IDE agent, CI, and future first-party integrations should be
+able to participate in one decision history without any provider owning it.
+Fabric keeps the protocol in repository-controlled, inspectable events and gives
+providers a small adapter contract.
 
-Today, a user can inspect a message or diff but often cannot answer: "Why did the agent choose this?" The useful answer is a provenance chain connecting the action to a decision, a finding from another thread, review feedback, and ultimately human direction or evidence.
+The intended experience is simple: select a message, action, commit, or PR and
+walk backward through decisions, findings, review evidence, and human direction.
+The repository becomes better at remembering what matters without becoming a
+transcript database.
 
-Fabric makes that knowledge explicit and scoped:
+## What Fabric Does
 
-- Record a decision, finding, or constraint once in repository-owned state.
-- Propagate it immediately across active threads and sibling worktrees.
-- Match it by issue, PR, or repository area instead of replaying all history.
-- Preserve source, evidence, rationale, rejected paths, and preferred paths.
-- Mark threads stale when new relevant direction arrives.
-- Review temporary knowledge after a task and promote only reusable lessons.
+- Stores immutable decisions, findings, requirements, challenges, and lifecycle
+  transitions as versioned protocol events.
+- Shares active direction immediately through the Git-common directory used by
+  sibling worktrees.
+- Projects relevant records by PR, issue, path, configured area, and global
+  scope with deterministic ranking and complete-record budgets.
+- Tracks exact delivery and provider-confirmed exposure with receipts instead of
+  scalar cursors.
+- Links records to opaque messages, actions, commits, issues, PRs, and evidence.
+- Distinguishes context availability from explicit causal influence.
+- Works fully locally with no account, network, daemon, database, or LLM call.
 
-The result is selective repository memory: smaller than a transcript, more durable than a chat summary, and portable across agent providers. A Codex thread, a Claude session, an IDE agent, and a future first-party integration should be able to participate in the same decision history without making any one provider the owner of it.
+## Core Model
 
-The long-term experience is straightforward: click an agent message or implementation choice and trace it back through the Fabric records that informed it. Fabric 0.1 establishes the shared ledger, scopes, thread cursors, evidence, and conflict model required for that experience; typed message-to-decision relationships are a later protocol extension.
+**Events** are immutable protocol mutations. Each event is one JSON file with a
+typed UUIDv7 ID such as `evt_...`.
 
-## Protocol and CLI
+**Records** are concise repository knowledge: direction, decisions, findings,
+requirements, challenges, and resolutions. Record IDs use `rec_...`.
 
-The protocol is the product boundary. It defines the records, scopes, durability, lifecycle, synchronization, context projection, provenance, and client behavior that let independent agents coordinate.
+**Threads** are scoped agent execution contexts. The registry and receipts are
+shared across worktrees; only the current-thread pointer is local.
 
-The `fabric` CLI is the reference client. It keeps the protocol usable today without a server, daemon, database, or LLM call. Provider integrations can wrap the same operations in native hooks and interfaces while leaving the repository state portable and inspectable.
+**Projections** record exactly which event revisions were selected, why they
+matched, and whether more were omitted by budget.
 
-This separation matters: Fabric should not become a GitHub wrapper, a hosted transcript service, or a provider-specific memory feature. Connectors and skills acquire or publish external context; Fabric validates, stores, matches, and explains the curated repository knowledge.
+**Receipts** record CLI delivery or adapter-confirmed model exposure. An omitted
+record remains pending.
 
-## Core Ideas
+**Relations** form the provenance graph: `derived_from`, `informed_by`,
+`implements`, `supersedes`, `challenges`, and `resolves`. Availability relations
+such as `delivered_to` and `exposed_to` are never presented as causal proof.
 
-### Records
+## Durability and Trust
 
-A Fabric record is a short statement that changes what a future agent should do or explains why earlier work chose a path. Records include:
+| Tier | Meaning | Storage |
+|---|---|---|
+| `live` | Temporary active-worktree coordination. | Git-common runtime only. |
+| `candidate` | Probably reusable, awaiting curation. | Tracked immutable ledger. |
+| `durable` | Reviewed long-term repository direction. | Tracked immutable ledger. |
 
-- **Direction:** a constraint future work should follow.
-- **Finding:** evidence or repository knowledge another thread should not rediscover.
-- **Decision:** a selected path with rationale and rejected alternatives.
-- **Requirement:** a scoped condition that must be satisfied.
-- **Challenge:** an explicit proposal to depart from active direction.
+Agents should default uncertain reusable knowledge to candidate. Durable
+promotion requires human- or reviewer-confirmed rationale. Lower-trust direction
+cannot silently replace stronger direction; it must challenge it or receive
+explicit approval.
 
-For example:
-
-- "Don't create a second listing endpoint; extend the existing one."
-- "Reviewer rejected picker-level Office special-casing."
-- "The shared resolver already owns unsupported file handling."
-
-Fabric is not a transcript store. It is not for chat history, code snippets, or full prompts. A record should be the smallest complete piece of knowledge that changes future work, with its source, rationale, and evidence when available.
-
-### Threads
-
-A thread is a scoped agent session. You start one with an issue, PR, or area:
-
-```bash
-fabric thread start --id thread-a --issue VS-123 --area virtual-store/listing
-```
-
-Fabric tracks what each thread has seen and marks threads stale when new relevant direction arrives.
-
-### Durability
-
-Records have three durability tiers:
-
-| Tier | What it means | Where it lives |
-|------|---------------|----------------|
-| **live** | Temporary; shared across active worktrees now. | Git-common shared mirror only. |
-| **candidate** | Probably important; needs review before becoming durable. | Durable ledger `.fabric/ledger/events.jsonl`. |
-| **durable** | Long-term project guidance; committed to Git. | Durable ledger `.fabric/ledger/events.jsonl`. |
-
-When in doubt, record reusable knowledge as a candidate. Promote it to durable only after review.
-
-### Lifecycle Status
-
-Each record also has a lifecycle status:
-
-| Status | Meaning |
-|--------|---------|
-| **active** | Current and actionable. |
-| **expired** | Useful during a task or PR, but its window is over. |
-| **discarded** | Too specific, noisy, or wrong. Kept for audit. |
-| **superseded** | Replaced by newer direction. |
-
-Inactive direction is hidden from normal sync, preflight, continue, handoff, and explain output. Use `fabric consolidate --include-inactive` to review it.
-
-## The Full Loop
-
-```text
-Thread A receives human direction
--> Thread B syncs and avoids the wrong path
--> PR review redirects implementation
--> Thread C continues with review context
--> Thread C generates a handoff
--> PR is done
--> fabric consolidate --pr 123 proposes:
-     promote reusable review direction
-     expire temporary test checklist
-     discard noisy comment
--> Human promotes one lesson
--> Next thread preflight sees durable direction
-```
-
-## Installation
-
-Build the CLI:
-
-```bash
-go build -o fabric ./cmd/fabric
-```
-
-Install to `$GOPATH/bin`:
+## Install
 
 ```bash
 go install ./cmd/fabric
 ```
 
-## Quick Start
+Or build locally:
 
-Initialize Fabric in a repo:
+```bash
+go build -o fabric ./cmd/fabric
+```
+
+## Quick Start
 
 ```bash
 fabric init
-```
-
-Initialization installs discoverable repository skills under `.agents/skills/`.
-
-Install the agent protocol into `AGENTS.md` and install the managed Fabric skills globally for the current user under `~/.agents/skills/`:
-
-```bash
 fabric install-agents
+
+fabric thread start --issue VS-123 --area virtual-store/listing \
+  --path 'internal/listing/**'
+
+fabric preflight "add listing filters" --issue VS-123 \
+  --area virtual-store/listing --path 'internal/listing/**'
+
+fabric note --candidate --reason "The shared endpoint owns pagination semantics" \
+  "Extend the existing listing endpoint instead of creating another one."
+
+fabric sync
 ```
 
-The global installation refreshes only the namespaced `fabric-*` skills and preserves unrelated user skills. When Cursor or Claude is installed, Fabric also creates per-skill links under `~/.cursor/skills/` or `~/.claude/skills/` so each provider can use its native discovery path. Existing non-symlink destinations are never replaced. The repo-local copies remain checked in so agents can discover the protocol before global installation and so teams can review the exact workflows they adopt.
+Fabric writes human projections under `.fabric/generated/`. They are views of
+the protocol state, not a second ledger.
 
-Start threads and record direction:
-
-```bash
-fabric thread start --id thread-a --issue VS-123 --area virtual-store/listing
-fabric note --thread thread-a "Don't create a second listing endpoint; extend the existing one or escalate API direction"
-
-fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
-fabric sync --thread thread-b --budget 300
-```
-
-Read `.fabric/generated/SYNC_DELTA.md` to see what thread-b missed.
-
-## Common Workflows
-
-### Record Human Direction
+## Common Operations
 
 ```bash
-fabric note --candidate "Direction that may matter later"
-fabric note --durable "Long-term project guidance"
-```
+# Discover client and repository capabilities
+fabric version --json
+fabric capabilities --json
+fabric status
 
-Interactive use without flags prompts for durability.
+# Create or resume scoped work
+fabric thread start --issue VS-123 --pr 42 --area listing --path 'internal/listing/**'
+fabric continue --pr 42 --budget 700
 
-### Sync a Thread
+# Record direction and review findings
+fabric note --candidate --issue VS-123 --reason "why this applies" "direction"
+fabric review note --pr 42 --issue VS-123 "review direction"
 
-```bash
-fabric sync --thread thread-b --budget 300
-```
+# Synchronize exact pending revisions
+fabric preflight "task description" --issue VS-123 --budget 800
+fabric sync --budget 300
 
-Sync writes `.fabric/generated/SYNC_DELTA.md` with direction the thread has not yet seen.
+# Confirm that a native adapter placed a projection in model context
+fabric context acknowledge --projection prj_... --state exposed --provider codex
 
-### Preflight Before Starting Work
+# Add causal provenance
+fabric relation add --type informed_by \
+  --from action:codex:opaque-action-id --to record:rec_...
+fabric relation add --type implements \
+  --from commit:abc123 --to record:rec_... --durable --reason "implements decision"
 
-```bash
-fabric preflight "add filtering to virtual-store listing" --issue VS-123 --area virtual-store/listing --budget 800
-```
+# Traverse explanation
+fabric explain --node action:codex:opaque-action-id --direction both --depth 4 --json
 
-Preflight writes `.fabric/generated/TASK_DIRECTION.md` with relevant active direction for the task.
+# Make disagreement explicit
+fabric challenge --direction rec_... --pr 42 --proposal "new path" --reason "new evidence"
+fabric challenge resolve rec_... --accepted --reason "scoped exception approved"
 
-### Continue a PR or Issue
+# Curate after work completes
+fabric consolidate --pr 42
+fabric promote rec_... --reason "reusable, human-confirmed repository direction"
+fabric expire rec_... --reason "PR completed"
+fabric discard rec_... --reason "too specific"
 
-```bash
-fabric continue --pr 123 --thread thread-c --budget 700
-```
-
-Continue writes `.fabric/generated/CONTINUATION_CONTEXT.md` with open challenges, review direction, live requirements, and issue direction.
-
-### Record Review Direction
-
-```bash
-fabric review note --pr 123 --issue VS-123 --area file-opening \
-  "Reviewer rejected picker-level Office special-casing; move unsupported file handling into the shared file-open resolver."
-```
-
-### Mine and Ingest PR Direction
-
-Use `$fabric-pr-direction`. The skill prefers the agent's native GitHub connector and falls back directly to authenticated `gh`; Fabric itself does not wrap GitHub.
-
-The skill presents extracted decisions for approval before it uses the existing template and dry-run workflow:
-
-```bash
-fabric ingest-pr template --pr 123 --issue VS-123 --area review-ingest
-# Review .fabric/generated/PR_REVIEW_INGEST.md
-fabric ingest-pr --pr 123 --issue VS-123 --area review-ingest \
-  --from-file .fabric/generated/PR_REVIEW_INGEST.md --dry-run
-# After explicit item selection:
-fabric ingest-pr --pr 123 --issue VS-123 --area review-ingest --from-file .fabric/generated/PR_REVIEW_INGEST.md
-```
-
-### Hand Off a PR
-
-```bash
-fabric handoff --pr 123 --budget 900
-```
-
-Handoff writes `.fabric/generated/HANDOFF.md` with current review direction, live requirements, open challenges, and rejected paths.
-
-### Challenge Existing Direction
-
-If a planned approach conflicts with active direction, record the dispute:
-
-```bash
-fabric challenge --direction evt_000001 --pr 123 --issue VS-123 \
-  --proposal "New proposed path" \
-  --reason "Why the existing direction may not apply"
-```
-
-Read `.fabric/generated/CHALLENGE.md`. Resolve later:
-
-```bash
-fabric challenge resolve evt_000003 --accepted
-```
-
-### Consolidate After a PR or Issue
-
-When work finishes, review what should survive:
-
-```bash
-fabric consolidate --pr 123
-# Read .fabric/generated/CONSOLIDATION.md
-```
-
-Then act on its suggestions:
-
-```bash
-fabric promote evt_000024 --reason "Reusable review-ingest product direction"
-fabric expire evt_000025 --reason "PR-local checklist item completed"
-fabric discard evt_000027 --reason "too specific to this PR"
-fabric keep evt_000026 --candidate
-```
-
-### Inspect Ledger Health
-
-```bash
+# Validate storage and protocol
 fabric doctor
+fabric conformance
 ```
 
-## Repo-local Files
+All commands support `--format=human|json`; `--json` is an alias. JSON responses
+use a stable protocol envelope and typed error codes so adapters never need to
+parse Markdown.
 
-`fabric init` creates the protocol state and discoverable agent skills:
+## Repository Layout
 
 ```text
-.agents/
-  skills/
-    fabric-session/
-    fabric-record-direction/
-    fabric-pr-direction/
-    fabric-consolidate/
-    fabric-publish/
-.fabric/
-  config.yaml              # repo name, budgets, paths
-  ledger/
-    events.jsonl           # durable/candidate direction (commit this)
-    threads.jsonl          # per-thread state (ignored by Git)
-  active/                  # per-worktree runtime state (ignored by Git)
-    issues/
-    current-thread
-  generated/               # checkpoint files for agents (ignored by Git)
-    TASK_DIRECTION.md
-    SYNC_DELTA.md
-    CONTINUATION_CONTEXT.md
-    CHALLENGE.md
-    PR_REVIEW_INGEST.md
-    HANDOFF.md
-    CONSOLIDATION.md
+.agents/skills/                         discoverable provider workflows
+.fabric/config.yaml                    repository matching and budgets
+.fabric/ledger/events/<event-id>.json  tracked candidate/durable events
+.fabric/active/current-thread          worktree-local pointer, ignored
+.fabric/generated/                     human projections, ignored
+
+<git-common-dir>/fabric/events/        shared live event copies
+<git-common-dir>/fabric/runtime/        threads, projections, receipts
 ```
 
-Git hygiene rule: commit project direction, not agent runtime state.
+Git hygiene is one sentence: commit project direction, not agent runtime state.
 
 Tracked:
 
 - `AGENTS.md`
 - `.agents/skills/**`
 - `.fabric/config.yaml`
-- `.fabric/ledger/events.jsonl`
+- `.fabric/ledger/events/**`
+- `PROTOCOL.md`, schemas, and conformance fixtures
 
 Ignored:
 
 - `.fabric/active/**`
 - `.fabric/generated/**`
-- `.fabric/ledger/threads.jsonl`
-- the git-common shared mirror (`.git/fabric/events.jsonl`)
+- the Git-common Fabric runtime
 
-## Commands
+One event per file makes independent branch additions merge naturally. Lifecycle
+changes append child events. Competing children are reported as conflicts, never
+resolved by last writer.
+
+## Agent Workflow
+
+Repository skills under `.agents/skills/` adapt agents to the protocol:
+
+- `fabric-session`: discovery, preflight, sync, and continuation.
+- `fabric-provenance`: exposure receipts, causal assertions, and explanation.
+- `fabric-record-direction`: corrections, rationale, and challenges.
+- `fabric-pr-direction`: bounded PR mining with approval before ingestion.
+- `fabric-consolidate`: sparse post-task curation.
+- `fabric-publish`: explicit external publication only.
+
+Fabric itself does not call GitHub or an LLM. Skills use provider connectors or
+authenticated tools to acquire context, then submit only approved records.
+
+## Provider Motivation View
+
+A provider such as Codex can build a native "Why did this happen?" view without
+reading Fabric Markdown:
+
+1. Create or resume a Fabric thread and consume a projection.
+2. Acknowledge actual model exposure with `fabric context acknowledge`.
+3. After an important message, tool action, commit, or PR, create explicit
+   `informed_by` and/or `implements` relations to the records it used. The
+   relation command accepts actor, provider, and trust claims so the assertion
+   can be attributed to the adapter that made it.
+4. When the user selects that provider object, call:
+
+   ```bash
+   fabric explain --node action:codex:<opaque-id> --direction both --depth 4 --json
+   ```
+
+The graph response includes opaque provider nodes, typed edges, and resolved
+record details with text, rationale, evidence, scope, creation and lifecycle
+actor/trust, lifecycle state, and conflicts. Relation details identify who
+asserted every causal or availability edge. Projection and thread details show
+when context was delivered or exposed. Provider deep links remain available on
+node references.
+
+Fabric never infers motivation from text similarity. If Codex reports only an
+exposure receipt, the view can say the record was available in context. It may
+say the record informed or was implemented by the action only when Codex writes
+the explicit causal relation.
+
+## Code Layout
+
+- `protocol/`: public transport-neutral Go contracts and validation.
+- `internal/core/`: direction mapping, relevance, graph traversal, and causal
+  materialization.
+- `internal/store/`: create-only immutable files and local/shared ledger routing.
+- `internal/direction/`: repository operations that compose core and storage.
+- `internal/skills/`: provider skill templates and installation sources.
+- `internal/cli/`: command parsing plus human/JSON rendering.
+- `cmd/fabric/`: the executable entry point.
+
+Protocol and repository behavior do not depend on CLI parsing, and storage does
+not own domain semantics. A future encrypted transport can implement the public
+store interfaces without moving those boundaries back into the CLI.
+
+## Future Private Service
+
+Local Git-backed operation is permanent. A future optional service may relay
+end-to-end encrypted event blobs between devices and repositories. It may know
+accounts, opaque repository/thread/event IDs, timestamps, membership, device
+public keys, blob sizes, and delivery receipts. It must never receive source
+code, patches, plaintext direction, rationale, evidence, prompts, transcripts,
+or repository credentials.
+
+Matching, projection, decryption, and explanation remain client-side. The full
+design and threat model are preserved in [SERVICE.md](SERVICE.md); no server,
+network client, authentication, or encryption is implemented now.
+
+## Development
 
 ```bash
-# Setup
-fabric init
-fabric install-agents
-
-# Threads
-fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
-
-# Direction
-fabric note "Prefer the existing endpoint"
-fabric note --candidate "Direction that may matter later"
-fabric note --durable "Long-term project guidance"
-fabric review note --pr 123 --issue VS-123 --area file-opening "Reviewer direction"
-
-# Context
-fabric sync --thread thread-b --budget 300
-fabric preflight "task text" --issue VS-123 --area virtual-store/listing --budget 800
-fabric continue --pr 123 --thread thread-c --budget 700
-fabric explain --issue VS-123
-fabric explain --pr 123
-
-# Review ingestion
-fabric ingest-pr template --pr 123 --issue VS-123 --area review-ingest
-fabric ingest-pr --pr 123 --issue VS-123 --area review-ingest --from-file review.md
-fabric handoff --pr 123 --budget 900
-
-# Challenges
-fabric challenge --direction evt_000001 --pr 123 --issue VS-123 --proposal "New path" --reason "Why"
-fabric challenge resolve evt_000003 --accepted
-
-# Lifecycle consolidation
-fabric consolidate --pr 123
-fabric consolidate --issue VS-123
-fabric promote evt_000024 --reason "Reusable review-ingest product direction"
-fabric expire evt_000025 --reason "PR-local checklist item completed"
-fabric discard evt_000027 --reason "too specific to this PR"
-fabric keep evt_000026 --candidate
-
-# Health
-fabric doctor
+go test ./...
+go test -race ./...
 ```
 
-## What Fabric Is Not
-
-There is no database, server, daemon, LLM call, transcript storage, dashboard, automatic PR mining, webhook, GitHub app, or Fabric-owned GitHub API layer. Agent skills use an available provider connector first and authenticated `gh` as the fallback. Fabric stays small, local, deterministic, and focused on direction state.
-
-## Test
-
-```bash
-go test -cover ./...
-```
+Schemas live in `schemas/v1/`, fixtures in `conformance/`, and the public Go
+protocol package in `protocol/`.

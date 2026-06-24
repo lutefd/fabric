@@ -1,0 +1,37 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-237a-7df8-943c-fbe12bb25f69",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.490122-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1538"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-237a-7509-a2d2-ad8147ea7b66",
+      "kind": "note",
+      "created_at": "2026-06-24T15:42:21-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-1",
+        "areas": [
+          "agent-protocol"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "thread_20260624_1538"
+      },
+      "text": "Fabric must make direction propagation work across separate agent threads and worktrees; if repo-local git-backed storage is the sync mechanism, the tracked/ignored .fabric policy and agent protocol must not silently isolate direction per worktree.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "durable"
+    }
+  }
+}

@@ -8,19 +8,27 @@ binary="${workspace}/fabric"
 echo "Demo workspace: ${workspace}"
 echo
 
-GOCACHE="${workspace}/gocache" GOMODCACHE="${workspace}/gomodcache" go build -o "${binary}" "${repo_root}/cmd/fabric"
+go_bin="${GO:-$(command -v go || true)}"
+if [[ -z "${go_bin}" && -x /usr/local/go/bin/go ]]; then
+  go_bin=/usr/local/go/bin/go
+fi
+(
+  cd "${repo_root}"
+  GOCACHE="${workspace}/gocache" "${go_bin}" build -o "${binary}" ./cmd/fabric
+)
 
 (
   cd "${workspace}"
 
   "${binary}" init
   "${binary}" thread start --id thread-c --pr 123 --issue VS-123 --area file-opening
-  "${binary}" note --issue VS-123 --area file-opening "Do not implement full Office preview; this is an entry-point consistency issue."
+  direction_id="$("${binary}" note --candidate --issue VS-123 --area file-opening --json \
+    "Do not implement full Office preview; this is an entry-point consistency issue." | jq -r '.data.id')"
   "${binary}" review note --pr 123 --issue VS-123 --area file-opening "Reviewer rejected picker-level Office special-casing; move unsupported file handling into the shared file-open resolver."
   "${binary}" continue --pr 123 --thread thread-followup --budget 700
-  "${binary}" challenge --direction evt_000001 --pr 123 --issue VS-123 --area file-opening --proposal "Implement internal Office preview for supported Office files" --reason "Product explicitly rescoped this from entry-point consistency to preview support."
+  challenge_id="$("${binary}" challenge --direction "${direction_id}" --pr 123 --issue VS-123 --area file-opening --proposal "Implement internal Office preview for supported Office files" --reason "Product explicitly rescoped this from entry-point consistency to preview support." --json | jq -r '.data.id')"
   "${binary}" continue --pr 123 --budget 700
-  "${binary}" challenge resolve evt_000003 --accepted
+  "${binary}" challenge resolve "${challenge_id}" --accepted
   "${binary}" continue --pr 123 --budget 700
   "${binary}" explain --pr 123
 

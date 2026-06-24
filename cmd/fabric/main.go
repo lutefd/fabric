@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lutefd/fabric/internal/fabric"
+	"github.com/lutefd/fabric/internal/cli"
 )
 
 func main() {
@@ -18,8 +18,10 @@ func mainWithExit(args []string, exit func(int)) {
 }
 
 func mainWithArgs(args []string) int {
-	if err := fabric.Run(args); err != nil {
-		fmt.Fprintln(os.Stderr, "fabric:", err)
+	if err := cli.Run(args); err != nil {
+		if !cli.IsRenderedError(err) {
+			fmt.Fprintln(os.Stderr, "fabric:", err)
+		}
 		return 1
 	}
 	return 0

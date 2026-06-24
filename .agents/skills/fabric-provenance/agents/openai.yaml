@@ -1,0 +1,6 @@
+interface:
+  display_name: "Record Fabric Provenance"
+  short_description: "Trace context exposure and causal influence"
+  default_prompt: "Use $fabric-provenance to record why this agent action used repository direction."
+policy:
+  allow_implicit_invocation: true

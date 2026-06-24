@@ -1,0 +1,38 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-2463-7752-b3ea-602a3176fe53",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.723133-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "codex_protocol_spec_20260624"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-2463-7183-9ec2-356c921d5306",
+      "kind": "note",
+      "created_at": "2026-06-24T18:19:50-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-1",
+        "areas": [
+          "architecture",
+          "agent-protocol"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "codex_protocol_spec_20260624"
+      },
+      "text": "Fabric Local V1 should retire the monolithic internal/fabric cli_*.go organization. Separate public protocol contracts, persistence, domain/materialization, agent-skill installation, and thin CLI parsing/rendering into proper packages during the V1 cutover.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "candidate"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Listing Filter Flow
 
-This is the V0 validation loop using an issue-shaped task.
+This is the smallest cross-thread correction loop using an issue-shaped task.
 
 ```bash
 fabric init
@@ -17,7 +17,7 @@ fabric note --thread thread-a --issue VS-123 --area virtual-store/listing "Don't
 Fabric marks Thread B stale:
 
 ```text
-Recorded direction evt_000001.
+Recorded candidate direction rec_....
 Marked 1 related threads stale:
 - thread-b
 ```

@@ -1,0 +1,55 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-23e4-745a-a3c0-cfaa4a5f41c1",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.596762-03:00",
+  "actor": {
+    "kind": "reviewer"
+  },
+  "trust": {
+    "level": "reviewer_confirmed",
+    "basis": "pr_ingest"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-23e4-7fc7-92ba-bf5ee913ef5e",
+      "kind": "review_direction",
+      "created_at": "2026-06-24T17:01:48-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-3",
+        "pr": "1",
+        "areas": [
+          "review-ingest"
+        ]
+      },
+      "source": {
+        "type": "pr_ingest",
+        "pr": "1"
+      },
+      "text": "Do not ingest every review comment as direction.",
+      "confidence": "reviewer_confirmed",
+      "ttl": "until_pr_closed",
+      "status": "active",
+      "durability": "durable",
+      "review_type": "rejection",
+      "reason": "The ledger should stay useful and sparse.",
+      "rejected_paths": [
+        "Treating all review comments as candidate project direction",
+        "Replaying raw review threads into continuation context"
+      ],
+      "preferred_paths": [
+        "Ingest only feedback that changes what another agent should do next",
+        "Keep nits/checklist items live or ignored"
+      ],
+      "evidence": [
+        {
+          "type": "note",
+          "text": "simulated review feedback during V3 dogfood"
+        }
+      ],
+      "lifecycle_reason": "Reusable review-ingest product direction",
+      "reviewed_at": "2026-06-24T17:16:47-03:00"
+    }
+  }
+}

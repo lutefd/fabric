@@ -1,0 +1,37 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-234d-769e-9ac0-02cd9eb69f86",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.44545-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1538"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-234d-75ab-a769-2cec24ecd785",
+      "kind": "note",
+      "created_at": "2026-06-24T15:38:08-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-1",
+        "areas": [
+          "agent-protocol"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "thread_20260624_1538"
+      },
+      "text": "Direction Fabric must not add more lifecycle features until agents can discover and use the protocol through root AGENTS.md, current-thread defaults, fabric status, and low-friction sync/note commands.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "durable"
+    }
+  }
+}

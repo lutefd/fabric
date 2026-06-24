@@ -1,0 +1,37 @@
+{
+  "schema_version": "fabric/1.0",
+  "event_id": "evt_019efb8f-23bc-7ebf-ae98-d3d80c9ed4b5",
+  "event_type": "record.created",
+  "occurred_at": "2026-06-24T18:35:22.556514-03:00",
+  "actor": {
+    "kind": "human",
+    "id": "thread_20260624_1623"
+  },
+  "trust": {
+    "level": "human_confirmed",
+    "basis": "human"
+  },
+  "payload": {
+    "record": {
+      "record_id": "rec_019efb8f-23bc-7cb5-b0f5-dc19b131d783",
+      "kind": "note",
+      "created_at": "2026-06-24T16:23:37-03:00",
+      "scope": {
+        "repo": "fabric",
+        "issue": "FAB-2",
+        "areas": [
+          "ledger-safety"
+        ]
+      },
+      "source": {
+        "type": "human",
+        "thread_id": "thread_20260624_1623"
+      },
+      "text": "Shared ledger state should support multiple agent worktrees without requiring every live direction to be committed to Git.",
+      "confidence": "human_confirmed",
+      "ttl": "until_issue_closed",
+      "status": "active",
+      "durability": "candidate"
+    }
+  }
+}
