@@ -40,8 +40,9 @@ func runReview(args []string) error {
 	}
 
 	event := DirectionEvent{
-		Kind:      "review_direction",
-		CreatedAt: nowString(),
+		Kind:       "review_direction",
+		CreatedAt:  nowString(),
+		Durability: DurabilityCandidate,
 		Scope: EventScope{
 			Repo:  repoName(),
 			Issue: *issue,

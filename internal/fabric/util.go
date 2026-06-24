@@ -38,6 +38,24 @@ func parseBudget(value string) (int, error) {
 	return parsed, nil
 }
 
+func flagsFirst(args []string) []string {
+	var flags []string
+	var positional []string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if strings.HasPrefix(arg, "-") {
+			flags = append(flags, arg)
+			if !strings.Contains(arg, "=") && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+				flags = append(flags, args[i+1])
+				i++
+			}
+		} else {
+			positional = append(positional, arg)
+		}
+	}
+	return append(flags, positional...)
+}
+
 type stringListFlag []string
 
 func (s *stringListFlag) String() string {

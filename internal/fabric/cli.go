@@ -27,6 +27,14 @@ func Run(args []string) error {
 		return runNote(args[1:])
 	case "promote":
 		return runPromote(args[1:])
+	case "expire":
+		return runExpire(args[1:])
+	case "discard":
+		return runDiscard(args[1:])
+	case "keep":
+		return runKeep(args[1:])
+	case "consolidate":
+		return runConsolidate(args[1:])
 	case "review":
 		return runReview(args[1:])
 	case "sync":
@@ -67,6 +75,12 @@ Usage:
 	fabric note --candidate "Direction that may matter later"
 	fabric note --durable "Long-term project guidance"
 	fabric promote evt_000018
+	fabric promote evt_000018 --reason "Reusable review-ingest product direction"
+	fabric expire evt_000025 --reason "PR-local checklist item completed"
+	fabric discard evt_000027 --reason "too specific to this PR"
+	fabric keep evt_000026 --candidate
+	fabric consolidate --pr 123
+	fabric consolidate --issue FAB-3
 	fabric review note --pr 123 --issue VS-123 --area virtual-store/listing "Reviewer direction"
 	fabric sync --budget 300
 	fabric preflight "task text" --issue VS-123 --area virtual-store/listing --budget 800
@@ -100,6 +114,7 @@ func runInit(args []string) error {
 		".fabric/skills/continue",
 		".fabric/skills/challenge",
 		".fabric/skills/pr-review-ingest",
+		".fabric/skills/consolidate-after-merge",
 	}
 	for _, dir := range dirs {
 		if err := mkdirAll(dir); err != nil {
@@ -123,6 +138,7 @@ func runInit(args []string) error {
 		{path: ".fabric/skills/continue/SKILL.md", content: continueSkill()},
 		{path: ".fabric/skills/challenge/SKILL.md", content: challengeSkill()},
 		{path: ".fabric/skills/pr-review-ingest/SKILL.md", content: prReviewIngestSkill()},
+		{path: ".fabric/skills/consolidate-after-merge/SKILL.md", content: consolidateAfterMergeSkill()},
 		{path: agentsPath, content: agentsSnippet(), update: true},
 	}
 	for _, file := range files {
@@ -382,13 +398,19 @@ func promptDurability() (string, error) {
 }
 
 func runPromote(args []string) error {
-	if len(args) != 1 {
+	fs := flag.NewFlagSet("promote", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	reason := fs.String("reason", "", "reason for promotion")
+	if err := fs.Parse(flagsFirst(args)); err != nil {
+		return err
+	}
+	if fs.NArg() != 1 {
 		return errors.New("expected: fabric promote <event-id>")
 	}
 	if err := ensureInitialized(); err != nil {
 		return err
 	}
-	event, err := promoteEvent(args[0])
+	event, err := promoteEvent(fs.Arg(0), *reason)
 	if err != nil {
 		return err
 	}

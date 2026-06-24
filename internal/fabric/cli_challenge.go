@@ -53,8 +53,9 @@ func runChallengeCreate(args []string) error {
 
 	text := challengeText(*directionID, *proposal, *reason)
 	event := DirectionEvent{
-		Kind:      "challenge",
-		CreatedAt: nowString(),
+		Kind:       "challenge",
+		CreatedAt:  nowString(),
+		Durability: DurabilityLive,
 		Scope: EventScope{
 			Repo:  repoName(),
 			Issue: *issue,
@@ -135,6 +136,7 @@ func runChallengeResolve(args []string) error {
 	event := DirectionEvent{
 		Kind:       "challenge_resolution",
 		CreatedAt:  nowString(),
+		Durability: DurabilityLive,
 		Scope:      challenge.Scope,
 		Source:     EventSource{Type: "human"},
 		Text:       text,
