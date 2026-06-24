@@ -1,0 +1,20 @@
+docs/local-v1-explainer.md
+  s_773bdea3d71d77::t_bea10a03a1aaef 1-154,161-215
+  s_773bdea3d71d77::t_e51e246af9ba03 155-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "896806eb340719dfaf93082e18cc95b57b37307f",
+  "prompts": {},
+  "sessions": {
+    "s_773bdea3d71d77": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efbbd-995a-7311-ba64-e6d904120a82",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
