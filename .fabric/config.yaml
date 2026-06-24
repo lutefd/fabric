@@ -1,0 +1,17 @@
+repo: fabric
+budgets:
+  preflight_tokens: 800
+  sync_delta_tokens: 300
+  continuation_tokens: 700
+matching:
+  issue_overlap: true
+  area_overlap: true
+  pr_overlap: true
+storage:
+  events: ".fabric/ledger/events.jsonl"
+  threads: ".fabric/ledger/threads.jsonl"
+generated:
+  task_direction: ".fabric/generated/TASK_DIRECTION.md"
+  sync_delta: ".fabric/generated/SYNC_DELTA.md"
+  continuation_context: ".fabric/generated/CONTINUATION_CONTEXT.md"
+  challenge: ".fabric/generated/CHALLENGE.md"
