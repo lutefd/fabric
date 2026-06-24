@@ -342,4 +342,6 @@ go test -race ./...
 ```
 
 Schemas live in `schemas/v1/`, fixtures in `conformance/`, and the public Go
-protocol package in `protocol/`.
+protocol package in `protocol/`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+development and protocol-change workflow, and [SECURITY.md](SECURITY.md) for
+private vulnerability reporting.
