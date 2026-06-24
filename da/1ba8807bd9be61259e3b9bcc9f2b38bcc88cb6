@@ -1,0 +1,36 @@
+.fabric/ledger/events/evt_019efbe7-11d9-7df6-85cd-0a699bf30530.json
+  s_99abcc89aab555::t_f20b4194e1c02e 1-29
+internal/skills/templates.go
+  s_99abcc89aab555::t_d1b1ccf43fce1b 27-29,83,88-90,92-94,97-98,100,279-281
+.agents/skills/fabric-session/SKILL.md
+  s_99abcc89aab555::t_d1b1ccf43fce1b 3,8-10,12-14,17-18,20
+internal/cli/agent_skills_test.go
+  s_99abcc89aab555::t_d1b1ccf43fce1b 59-60,62-63
+  s_99abcc89aab555::t_ba4ca313a6f805 61
+README.md
+  s_99abcc89aab555::t_d1b1ccf43fce1b 262
+.agents/skills/fabric-session/agents/openai.yaml
+  s_99abcc89aab555::t_d1b1ccf43fce1b 3-4,6
+AGENTS.md
+  s_99abcc89aab555::t_d1b1ccf43fce1b 6-8
+.fabric/ledger/events/evt_019efbe7-11c3-7b64-a99f-08960840bca9.json
+  s_99abcc89aab555::t_f20b4194e1c02e 1-38
+internal/cli/app_test.go
+  s_99abcc89aab555::t_ba4ca313a6f805 167-168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "da1ba8807bd9be61259e3b9bcc9f2b38bcc88cb6",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
