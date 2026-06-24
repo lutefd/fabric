@@ -22,10 +22,14 @@ func Run(args []string) error {
 		return runThread(args[1:])
 	case "note":
 		return runNote(args[1:])
+	case "review":
+		return runReview(args[1:])
 	case "sync":
 		return runSync(args[1:])
 	case "preflight":
 		return runPreflight(args[1:])
+	case "continue":
+		return runContinue(args[1:])
 	case "explain":
 		return runExplain(args[1:])
 	case "help", "-h", "--help":
@@ -37,15 +41,18 @@ func Run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Print(`Fabric V0
+	fmt.Print(`Fabric
 
 Usage:
 	fabric init
 	fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
 	fabric note --thread thread-a --issue VS-123 --area virtual-store/listing "Don't repeat this path"
+	fabric review note --pr 123 --issue VS-123 --area virtual-store/listing "Reviewer direction"
 	fabric sync --thread thread-b --budget 300
 	fabric preflight "task text" --issue VS-123 --area virtual-store/listing --budget 800
+	fabric continue --pr 123 --budget 700
 	fabric explain --issue VS-123
+	fabric explain --pr 123
 `)
 }
 
@@ -361,13 +368,14 @@ func runExplain(args []string) error {
 	fs := flag.NewFlagSet("explain", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	issue := fs.String("issue", "", "issue key")
+	pr := fs.String("pr", "", "pull request number")
 	areas := stringListFlag{}
 	fs.Var(&areas, "area", "area, repeatable")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	if *issue == "" && len(areas) == 0 {
-		return errors.New("explain requires --issue or --area")
+	if *issue == "" && *pr == "" && len(areas) == 0 {
+		return errors.New("explain requires --issue, --pr, or --area")
 	}
 
 	events, err := loadEvents()
@@ -377,6 +385,9 @@ func runExplain(args []string) error {
 	threads, err := loadThreads()
 	if err != nil {
 		return err
+	}
+	if *pr != "" {
+		return printExplainPR(*pr, relevantEventsForScope(events, *issue, *pr, areas), threads)
 	}
 	return printExplain(*issue, areas, relevantEvents(events, *issue, areas), threads)
 }

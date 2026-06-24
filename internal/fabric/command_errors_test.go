@@ -109,6 +109,38 @@ func TestCommandLedgerAndGeneratedFileErrors(t *testing.T) {
 		}
 	})
 
+	t.Run("review note rejects malformed ledgers and append failures", func(t *testing.T) {
+		chdirTemp(t)
+		mustRun(t, "init")
+		if err := os.WriteFile(eventsPath, []byte("{bad\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := Run([]string{"review", "note", "--pr", "123", "direction"}); err == nil {
+			t.Fatal("review note accepted malformed events ledger")
+		}
+		if err := os.WriteFile(eventsPath, nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		withAppendLedger(t, func(path string, value any) error {
+			if path == eventsPath {
+				return errors.New("append review failed")
+			}
+			return appendJSONL(path, value)
+		})
+		if err := Run([]string{"review", "note", "--pr", "123", "direction"}); err == nil {
+			t.Fatal("review note ignored event append failure")
+		}
+
+		appendLedger = appendJSONL
+		if err := os.WriteFile(threadsPath, []byte("{bad\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := Run([]string{"review", "note", "--pr", "123", "direction"}); err == nil {
+			t.Fatal("review note accepted malformed threads ledger")
+		}
+	})
+
 	t.Run("sync rejects malformed ledgers and unwritable generated file", func(t *testing.T) {
 		chdirTemp(t)
 		mustRun(t, "init")
@@ -200,6 +232,44 @@ func TestCommandLedgerAndGeneratedFileErrors(t *testing.T) {
 		}
 		if err := Run([]string{"preflight", "task", "--issue", "VS-123"}); err == nil {
 			t.Fatal("preflight wrote task direction to a directory")
+		}
+	})
+
+	t.Run("continue rejects malformed events and unwritable continuation file", func(t *testing.T) {
+		chdirTemp(t)
+		mustRun(t, "init")
+		if err := os.WriteFile(eventsPath, []byte("{bad\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := Run([]string{"continue", "--pr", "123"}); err == nil {
+			t.Fatal("continue accepted malformed events ledger")
+		}
+		if err := os.WriteFile(eventsPath, nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Remove(continuePath); err != nil && !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		if err := os.Mkdir(continuePath, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := Run([]string{"continue", "--pr", "123"}); err == nil {
+			t.Fatal("continue wrote continuation context to a directory")
+		}
+	})
+
+	t.Run("continue returns thread append failures", func(t *testing.T) {
+		chdirTemp(t)
+		mustRun(t, "init")
+
+		withAppendLedger(t, func(path string, value any) error {
+			if path == threadsPath {
+				return errors.New("append continuation thread failed")
+			}
+			return appendJSONL(path, value)
+		})
+		if err := Run([]string{"continue", "--pr", "123", "--thread", "thread-c"}); err == nil {
+			t.Fatal("continue ignored thread append failure")
 		}
 	})
 

@@ -93,6 +93,56 @@ func preflightMarkdown(task, issue string, areas []string, events []DirectionEve
 	return b.String()
 }
 
+func continuationMarkdown(issue, pr string, events []DirectionEvent, omitted bool) string {
+	var b strings.Builder
+	fmt.Fprintln(&b, "# Continuation Context")
+	fmt.Fprintln(&b)
+	if pr != "" {
+		fmt.Fprintln(&b, "PR:")
+		fmt.Fprintln(&b, pr)
+		fmt.Fprintln(&b)
+	}
+	if issue != "" {
+		fmt.Fprintln(&b, "Issue:")
+		fmt.Fprintln(&b, issue)
+		fmt.Fprintln(&b)
+	}
+	fmt.Fprintln(&b, "Current review direction:")
+	fmt.Fprintln(&b)
+	reviewIndex := 0
+	for _, event := range events {
+		if event.Kind != "review_direction" {
+			continue
+		}
+		reviewIndex++
+		fmt.Fprintf(&b, "%d. %s\n", reviewIndex, event.Text)
+	}
+	if reviewIndex == 0 {
+		fmt.Fprintln(&b, "No active review direction found.")
+	}
+	writeBudgetOmission(&b, omitted)
+	fmt.Fprintln(&b)
+	fmt.Fprintln(&b, "Active issue direction:")
+	fmt.Fprintln(&b)
+	issueIndex := 0
+	for _, event := range events {
+		if event.Kind == "review_direction" {
+			continue
+		}
+		issueIndex++
+		fmt.Fprintf(&b, "%d. %s\n", issueIndex, event.Text)
+	}
+	if issueIndex == 0 {
+		fmt.Fprintln(&b, "No active issue direction found.")
+	}
+	fmt.Fprintln(&b)
+	fmt.Fprintln(&b, "Instructions:")
+	fmt.Fprintln(&b, "- Address the review direction first.")
+	fmt.Fprintln(&b, "- Do not reopen rejected implementation paths.")
+	fmt.Fprintln(&b, "- If the review direction conflicts with active project/task direction, stop and ask whether to challenge it.")
+	return b.String()
+}
+
 func writeBudgetOmission(b *strings.Builder, omitted bool) {
 	if !omitted {
 		return
@@ -122,6 +172,39 @@ func printExplain(issue string, areas []string, events []DirectionEvent, threads
 		fmt.Println()
 		fmt.Println("Source:")
 		fmt.Printf("%s %s\n", event.Source.Type, sourceThread(event.Source.ThreadID))
+		fmt.Println()
+		seen, stale := seenAndStale(event, threads)
+		fmt.Println("Seen by:")
+		printIDList(seen)
+		fmt.Println()
+		fmt.Println("Stale:")
+		printIDList(stale)
+		fmt.Println()
+	}
+	return nil
+}
+
+func printExplainPR(pr string, events []DirectionEvent, threads map[string]ThreadRecord) error {
+	fmt.Printf("Active direction for PR %s:\n\n", pr)
+	if len(events) == 0 {
+		fmt.Println("No active direction found.")
+		return nil
+	}
+	for _, event := range events {
+		fmt.Println(event.ID)
+		fmt.Println("Kind:")
+		fmt.Println(event.Kind)
+		fmt.Println()
+		fmt.Println("Text:")
+		fmt.Println(event.Text)
+		fmt.Println()
+		fmt.Println("Scope:")
+		fmt.Printf("pr: %s\n", emptyAsNone(event.Scope.PR))
+		fmt.Printf("issue: %s\n", emptyAsNone(event.Scope.Issue))
+		fmt.Printf("area: %s\n", emptyAsNone(strings.Join(event.Scope.Areas, ", ")))
+		fmt.Println()
+		fmt.Println("Source:")
+		fmt.Println(event.Source.Type)
 		fmt.Println()
 		seen, stale := seenAndStale(event, threads)
 		fmt.Println("Seen by:")

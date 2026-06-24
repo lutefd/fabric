@@ -13,8 +13,10 @@ func TestRunDispatchAndUsage(t *testing.T) {
 		mustRun(t, "-h")
 		mustRun(t, "--help")
 	})
-	assertContains(t, output, "Fabric V0")
+	assertContains(t, output, "Fabric")
 	assertContains(t, output, "fabric init")
+	assertContains(t, output, "fabric review note")
+	assertContains(t, output, "fabric continue")
 
 	if err := Run([]string{"missing"}); err == nil {
 		t.Fatal("unknown command returned nil error")

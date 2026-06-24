@@ -3,7 +3,7 @@ package fabric
 import "sort"
 
 func latestRelevantEventID(events []DirectionEvent, issue string, areas []string) string {
-	matches := relevantEvents(events, issue, areas)
+	matches := relevantEventsForScope(events, issue, "", areas)
 	if len(matches) == 0 {
 		return ""
 	}
@@ -11,9 +11,13 @@ func latestRelevantEventID(events []DirectionEvent, issue string, areas []string
 }
 
 func relevantEvents(events []DirectionEvent, issue string, areas []string) []DirectionEvent {
+	return relevantEventsForScope(events, issue, "", areas)
+}
+
+func relevantEventsForScope(events []DirectionEvent, issue, pr string, areas []string) []DirectionEvent {
 	var matches []DirectionEvent
 	for _, event := range events {
-		if reasonFor(event, issue, areas).matched() {
+		if reasonForScope(event, issue, pr, areas).matched() {
 			matches = append(matches, event)
 		}
 	}
@@ -41,7 +45,7 @@ func staleThreads(event DirectionEvent, threads map[string]ThreadRecord) []strin
 		if eventID <= eventNumber(thread.LastSeenEventID) {
 			continue
 		}
-		if reasonFor(event, thread.Issue, thread.Areas).matched() {
+		if reasonForScope(event, thread.Issue, thread.PR, thread.Areas).matched() {
 			stale = append(stale, id)
 		}
 	}
@@ -53,7 +57,7 @@ func seenAndStale(event DirectionEvent, threads map[string]ThreadRecord) ([]stri
 	var seen []string
 	var stale []string
 	for id, thread := range threads {
-		if !reasonFor(event, thread.Issue, thread.Areas).matched() {
+		if !reasonForScope(event, thread.Issue, thread.PR, thread.Areas).matched() {
 			continue
 		}
 		if eventNumber(thread.LastSeenEventID) >= eventNumber(event.ID) {
@@ -68,9 +72,16 @@ func seenAndStale(event DirectionEvent, threads map[string]ThreadRecord) ([]stri
 }
 
 func reasonFor(event DirectionEvent, issue string, areas []string) matchReason {
+	return reasonForScope(event, issue, "", areas)
+}
+
+func reasonForScope(event DirectionEvent, issue, pr string, areas []string) matchReason {
 	reason := matchReason{Global: event.Scope.Global}
 	if event.Scope.Issue != "" && issue != "" && event.Scope.Issue == issue {
 		reason.Issue = true
+	}
+	if event.Scope.PR != "" && pr != "" && event.Scope.PR == pr {
+		reason.PR = true
 	}
 	for _, eventArea := range event.Scope.Areas {
 		for _, area := range areas {
@@ -83,5 +94,5 @@ func reasonFor(event DirectionEvent, issue string, areas []string) matchReason {
 }
 
 func (m matchReason) matched() bool {
-	return m.Global || m.Issue || len(m.Areas) > 0
+	return m.Global || m.Issue || m.PR || len(m.Areas) > 0
 }

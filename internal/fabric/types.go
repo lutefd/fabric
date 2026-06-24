@@ -14,6 +14,7 @@ type DirectionEvent struct {
 type EventScope struct {
 	Repo   string   `json:"repo,omitempty"`
 	Issue  string   `json:"issue,omitempty"`
+	PR     string   `json:"pr,omitempty"`
 	Areas  []string `json:"areas,omitempty"`
 	Global bool     `json:"global,omitempty"`
 }
@@ -21,18 +22,21 @@ type EventScope struct {
 type EventSource struct {
 	Type     string `json:"type"`
 	ThreadID string `json:"thread_id,omitempty"`
+	PR       string `json:"pr,omitempty"`
 }
 
 type ThreadRecord struct {
 	ThreadID        string   `json:"thread_id"`
 	CreatedAt       string   `json:"created_at"`
 	Issue           string   `json:"issue,omitempty"`
+	PR              string   `json:"pr,omitempty"`
 	Areas           []string `json:"areas,omitempty"`
 	LastSeenEventID string   `json:"last_seen_event_id,omitempty"`
 }
 
 type matchReason struct {
 	Issue  bool
+	PR     bool
 	Areas  []string
 	Global bool
 }

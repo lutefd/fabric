@@ -7,15 +7,18 @@ func defaultConfig(repo string) string {
 budgets:
   preflight_tokens: 800
   sync_delta_tokens: 300
+  continuation_tokens: 700
 matching:
   issue_overlap: true
   area_overlap: true
+  pr_overlap: true
 storage:
   events: ".fabric/ledger/events.jsonl"
   threads: ".fabric/ledger/threads.jsonl"
 generated:
   task_direction: ".fabric/generated/TASK_DIRECTION.md"
   sync_delta: ".fabric/generated/SYNC_DELTA.md"
+  continuation_context: ".fabric/generated/CONTINUATION_CONTEXT.md"
 `, repo)
 }
 
@@ -62,6 +65,18 @@ Read:
 When the human gives project direction, record it:
 
 fabric note --thread "<thread-id>" --issue "<issue>" --area "<area>" "<direction>"
+
+When PR review redirects the implementation, record it explicitly:
+
+fabric review note --pr "<pr>" --issue "<issue>" --area "<area>" "<review direction>"
+
+When continuing PR/review work in a fresh or follow-up thread, run:
+
+fabric continue --pr "<pr>" --thread "<thread-id>" --budget 700
+
+Read:
+
+.fabric/generated/CONTINUATION_CONTEXT.md
 
 Do not silently ignore active direction. If your planned approach conflicts with direction, stop and ask whether to align, request an exception, or challenge the direction.
 `
