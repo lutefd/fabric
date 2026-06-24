@@ -148,16 +148,54 @@ func continuationMarkdown(issue, pr string, events []DirectionEvent, omitted boo
 		}
 		reviewIndex++
 		fmt.Fprintf(&b, "%d. %s\n", reviewIndex, event.Text)
+		if len(event.RejectedPaths) > 0 {
+			fmt.Fprintln(&b)
+			fmt.Fprintln(&b, "   Rejected paths:")
+			for _, path := range event.RejectedPaths {
+				fmt.Fprintf(&b, "   - %s\n", path)
+			}
+		}
+		if len(event.PreferredPaths) > 0 {
+			fmt.Fprintln(&b)
+			fmt.Fprintln(&b, "   Preferred paths:")
+			for _, path := range event.PreferredPaths {
+				fmt.Fprintf(&b, "   - %s\n", path)
+			}
+		}
+		if event.Reason != "" {
+			fmt.Fprintln(&b)
+			fmt.Fprintf(&b, "   Reason:\n   %s\n", event.Reason)
+		}
+		fmt.Fprintln(&b)
 	}
 	if reviewIndex == 0 {
 		fmt.Fprintln(&b, "No active review direction found.")
+	}
+	fmt.Fprintln(&b)
+	fmt.Fprintln(&b, "Active live requirements:")
+	fmt.Fprintln(&b)
+	requirementIndex := 0
+	for _, event := range events {
+		if event.Kind != "review_requirement" {
+			continue
+		}
+		requirementIndex++
+		fmt.Fprintf(&b, "%d. %s\n", requirementIndex, event.Text)
+		if event.Reason != "" {
+			fmt.Fprintln(&b)
+			fmt.Fprintf(&b, "   Reason:\n   %s\n", event.Reason)
+		}
+		fmt.Fprintln(&b)
+	}
+	if requirementIndex == 0 {
+		fmt.Fprintln(&b, "No active live requirements.")
 	}
 	fmt.Fprintln(&b)
 	fmt.Fprintln(&b, "Active issue direction:")
 	fmt.Fprintln(&b)
 	issueIndex := 0
 	for _, event := range events {
-		if event.Kind == "review_direction" || event.Kind == "challenge" || event.Kind == "challenge_resolution" {
+		if event.Kind == "review_direction" || event.Kind == "review_requirement" || event.Kind == "challenge" || event.Kind == "challenge_resolution" {
 			continue
 		}
 		issueIndex++

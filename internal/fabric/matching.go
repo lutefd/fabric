@@ -117,8 +117,8 @@ func prioritizedEvents(events []DirectionEvent, issue, pr string, areas []string
 }
 
 func eventPriority(event DirectionEvent, issue, pr string, areas []string, resolutions map[string]DirectionEvent) int {
+	reason := reasonForScope(event, issue, pr, areas)
 	if isOpenChallenge(event, resolutions) {
-		reason := reasonForScope(event, issue, pr, areas)
 		if reason.PR {
 			return 1
 		}
@@ -128,9 +128,36 @@ func eventPriority(event DirectionEvent, issue, pr string, areas []string, resol
 		return 3
 	}
 	if event.Kind == "review_direction" {
-		return 4
+		if reason.PR {
+			return 4
+		}
+		if reason.Issue {
+			return 5
+		}
+		if len(reason.Areas) > 0 {
+			return 6
+		}
+		return 7
 	}
-	return 5
+	if event.Kind == "review_requirement" {
+		if reason.PR {
+			return 8
+		}
+		if reason.Issue {
+			return 9
+		}
+		if len(reason.Areas) > 0 {
+			return 10
+		}
+		return 11
+	}
+	if reason.Issue {
+		return 12
+	}
+	if len(reason.Areas) > 0 {
+		return 13
+	}
+	return 14
 }
 
 func isOpenChallenge(event DirectionEvent, resolutions map[string]DirectionEvent) bool {
