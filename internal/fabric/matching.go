@@ -21,6 +21,9 @@ func relevantEvents(events []DirectionEvent, issue string, areas []string) []Dir
 func relevantEventsForScope(events []DirectionEvent, issue, pr string, areas []string) []DirectionEvent {
 	var matches []DirectionEvent
 	for _, event := range events {
+		if !isActiveEvent(event) {
+			continue
+		}
 		if reasonForScope(event, issue, pr, areas).matched() {
 			matches = append(matches, event)
 		}
@@ -41,6 +44,9 @@ func relevantEventsSinceForScope(events []DirectionEvent, issue, pr string, area
 
 func staleThreads(event DirectionEvent, threads map[string]ThreadRecord) []string {
 	var stale []string
+	if !isActiveEvent(event) {
+		return stale
+	}
 	eventID := eventNumber(event.ID)
 	for id, thread := range threads {
 		if id == event.Source.ThreadID {
@@ -60,6 +66,9 @@ func staleThreads(event DirectionEvent, threads map[string]ThreadRecord) []strin
 func seenAndStale(event DirectionEvent, threads map[string]ThreadRecord) ([]string, []string) {
 	var seen []string
 	var stale []string
+	if !isActiveEvent(event) {
+		return seen, stale
+	}
 	for id, thread := range threads {
 		if !reasonForScope(event, thread.Issue, thread.PR, thread.Areas).matched() {
 			continue
