@@ -28,6 +28,24 @@ unless the human explicitly says it is temporary or durable.
 Promote a candidate later:
   fabric promote <event-id>
 
+Check ledger health:
+  fabric doctor
+
+Git hygiene rule:
+  Commit project direction, not agent runtime state.
+
+Tracked:
+- AGENTS.md
+- .fabric/config.yaml
+- .fabric/skills/**
+- .fabric/ledger/events.jsonl (candidate/durable project direction only)
+
+Ignored:
+- .fabric/active/**
+- .fabric/generated/**
+- .fabric/ledger/threads.jsonl
+- the git-common shared mirror (.git/fabric/events.jsonl)
+
 When continuing PR/review work:
 - Run fabric continue --pr "<pr>".
 - Read .fabric/generated/CONTINUATION_CONTEXT.md.
