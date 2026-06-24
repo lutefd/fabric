@@ -1,0 +1,19 @@
+README.md
+  s_99abcc89aab555::t_72618fdc9c9845 140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "85fdf0fa0eb3cc7df0501801e2f46e75450b0329",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
