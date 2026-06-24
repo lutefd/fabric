@@ -110,6 +110,9 @@ func TestNoteValidationScopeInferenceAndBranchInference(t *testing.T) {
 	if err := os.WriteFile(".git/HEAD", []byte("ref: refs/heads/feature/VS-999-filtering\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Remove(currentThreadPath); err != nil {
+		t.Fatal(err)
+	}
 	mustRun(t, "note", "Inferred from branch")
 
 	events, err := loadEvents()
@@ -147,6 +150,194 @@ func TestSyncValidationAndNoUpdates(t *testing.T) {
 	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "VS-123")
 	mustRun(t, "sync", "--thread", "thread-a")
 	assertContains(t, mustRead(t, syncPath), "No new relevant direction")
+}
+
+func TestAgentProtocolUsesCurrentThreadAndRootAgentsFile(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	mustRun(t, "install-agents")
+
+	agents := mustRead(t, "AGENTS.md")
+	assertContains(t, agents, fabricBlockStart)
+	assertContains(t, agents, "fabric status")
+	assertContains(t, agents, "fabric sync")
+	assertContains(t, agents, fabricBlockEnd)
+
+	if err := os.WriteFile("AGENTS.md", []byte("User notes before\n\n"+agents+"\nUser notes after\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, "install-agents")
+	updatedAgents := mustRead(t, "AGENTS.md")
+	assertContains(t, updatedAgents, "User notes before")
+	assertContains(t, updatedAgents, "User notes after")
+	assertContains(t, updatedAgents, "fabric continue --pr")
+	if got := strings.Count(updatedAgents, fabricBlockStart); got != 1 {
+		t.Fatalf("fabric start markers = %d, want 1", got)
+	}
+	if got := strings.Count(updatedAgents, fabricBlockEnd); got != 1 {
+		t.Fatalf("fabric end markers = %d, want 1", got)
+	}
+
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-1", "--area", "agent-protocol")
+	if got := mustRead(t, currentThreadPath); got != "thread-a\n" {
+		t.Fatalf("current thread = %q, want thread-a", got)
+	}
+
+	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "FAB-1", "--area", "agent-protocol")
+	mustRun(t, "note", "--thread", "thread-a", "Root AGENTS.md is required")
+	statusBeforeSync := captureStdout(t, func() {
+		mustRun(t, "status")
+	})
+	assertContains(t, statusBeforeSync, "Current thread:\nthread-b")
+	assertContains(t, statusBeforeSync, "1 new relevant direction available.")
+	assertContains(t, statusBeforeSync, "Run: fabric sync")
+	assertContains(t, statusBeforeSync, "- .fabric/generated/SYNC_DELTA.md")
+
+	mustRun(t, "sync")
+	assertContains(t, mustRead(t, syncPath), "Root AGENTS.md is required")
+
+	statusAfterSync := captureStdout(t, func() {
+		mustRun(t, "status")
+	})
+	assertContains(t, statusAfterSync, "No new relevant directions.")
+
+	mustRun(t, "note", "Current thread scope should be inferred")
+	events, err := loadEvents()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := events[len(events)-1]
+	if got.Source.ThreadID != "thread-b" || got.Scope.Issue != "FAB-1" || len(got.Scope.Areas) != 1 || got.Scope.Areas[0] != "agent-protocol" {
+		t.Fatalf("current-thread inferred event = %#v", got)
+	}
+}
+
+func TestSharedEventsPropagateAcrossGitWorktrees(t *testing.T) {
+	root := t.TempDir()
+	previous, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(previous); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	commonGit := root + "/common.git"
+	workA := root + "/work-a"
+	workB := root + "/work-b"
+	for _, dir := range []string{commonGit + "/worktrees/a", commonGit + "/worktrees/b", workA, workB} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(commonGit+"/worktrees/a/commondir", []byte("../..\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(commonGit+"/worktrees/b/commondir", []byte("../..\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(workA+"/.git", []byte("gitdir: "+commonGit+"/worktrees/a\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(workB+"/.git", []byte("gitdir: "+commonGit+"/worktrees/b\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chdir(workA); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-1", "--area", "agent-protocol")
+	if err := os.Chdir(workB); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "FAB-1", "--area", "agent-protocol")
+
+	if err := os.Chdir(workA); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, "note", "Direction from worktree A")
+	assertContains(t, mustRead(t, eventsPath), "Direction from worktree A")
+	assertContains(t, mustRead(t, commonGit+"/"+sharedEventsRel), "Direction from worktree A")
+
+	if err := os.Chdir(workB); err != nil {
+		t.Fatal(err)
+	}
+	status := captureStdout(t, func() {
+		mustRun(t, "status")
+	})
+	assertContains(t, status, "1 new relevant direction available.")
+	mustRun(t, "sync")
+	assertContains(t, mustRead(t, syncPath), "Direction from worktree A")
+	assertNotContains(t, mustRead(t, eventsPath), "Direction from worktree A")
+}
+
+func TestInitMirrorsExistingLocalEventsToSharedGitLedger(t *testing.T) {
+	chdirTemp(t)
+	if err := os.Mkdir(".git", 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-1")
+	mustRun(t, "note", "Existing local direction")
+
+	sharedPath := ".git/" + sharedEventsRel
+	assertContains(t, mustRead(t, sharedPath), "Existing local direction")
+	if err := os.Remove(sharedPath); err != nil {
+		t.Fatal(err)
+	}
+
+	mustRun(t, "init")
+	assertContains(t, mustRead(t, sharedPath), "Existing local direction")
+}
+
+func TestStatusReportsNoCurrentAndUnknownCurrentThread(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	statusWithoutCurrent := captureStdout(t, func() {
+		mustRun(t, "status")
+	})
+	assertContains(t, statusWithoutCurrent, "Current thread:\nnone")
+	assertContains(t, statusWithoutCurrent, "issue: none")
+	assertContains(t, statusWithoutCurrent, "Run: fabric thread start --issue ... --area ...")
+
+	if err := saveCurrentThreadID("thread-missing"); err != nil {
+		t.Fatal(err)
+	}
+	statusWithUnknownCurrent := captureStdout(t, func() {
+		mustRun(t, "status")
+	})
+	assertContains(t, statusWithUnknownCurrent, `unknown current thread "thread-missing"`)
+	assertContains(t, statusWithUnknownCurrent, "Generated files:")
+}
+
+func TestSyncExplicitThreadOverridesCurrentThread(t *testing.T) {
+	chdirTemp(t)
+
+	mustRun(t, "init")
+	mustRun(t, "thread", "start", "--id", "thread-a", "--issue", "FAB-1", "--area", "agent-protocol")
+	mustRun(t, "thread", "start", "--id", "thread-b", "--issue", "OTHER-1", "--area", "other-area")
+	mustRun(t, "note", "--thread", "thread-b", "--issue", "FAB-1", "--area", "agent-protocol", "Direction for the non-current thread")
+
+	mustRun(t, "sync", "--thread", "thread-a")
+
+	assertContains(t, mustRead(t, syncPath), "Direction for the non-current thread")
+	if got := mustRead(t, currentThreadPath); got != "thread-b\n" {
+		t.Fatalf("current thread = %q, want thread-b", got)
+	}
+	threads, err := loadThreads()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := threads["thread-a"].LastSeenEventID; got != "evt_000001" {
+		t.Fatalf("thread-a last seen = %q, want evt_000001", got)
+	}
 }
 
 func TestSyncEnforcesBudgetAndUsesThreadScopeForApplicability(t *testing.T) {
