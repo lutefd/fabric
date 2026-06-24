@@ -71,26 +71,29 @@ func runInit(args []string) error {
 	}
 
 	repo := baseName(mustGetwd())
-	if err := writeFileIfMissing(configPath, defaultConfig(repo)); err != nil {
-		return err
+	files := []struct {
+		path    string
+		content string
+		touch   bool
+	}{
+		{path: configPath, content: defaultConfig(repo)},
+		{path: eventsPath, touch: true},
+		{path: threadsPath, touch: true},
+		{path: ".fabric/skills/preflight/SKILL.md", content: preflightSkill()},
+		{path: ".fabric/skills/sync/SKILL.md", content: syncSkill()},
+		{path: ".fabric/skills/note/SKILL.md", content: noteSkill()},
+		{path: agentsPath, content: agentsSnippet()},
 	}
-	if err := touchIfMissing(eventsPath); err != nil {
-		return err
-	}
-	if err := touchIfMissing(threadsPath); err != nil {
-		return err
-	}
-	if err := writeFileIfMissing(".fabric/skills/preflight/SKILL.md", preflightSkill()); err != nil {
-		return err
-	}
-	if err := writeFileIfMissing(".fabric/skills/sync/SKILL.md", syncSkill()); err != nil {
-		return err
-	}
-	if err := writeFileIfMissing(".fabric/skills/note/SKILL.md", noteSkill()); err != nil {
-		return err
-	}
-	if err := writeFileIfMissing(agentsPath, agentsSnippet()); err != nil {
-		return err
+	for _, file := range files {
+		var err error
+		if file.touch {
+			err = touchIfMissing(file.path)
+		} else {
+			err = writeFileIfMissing(file.path, file.content)
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("Initialized Fabric in .fabric/")
@@ -135,7 +138,7 @@ func runThread(args []string) error {
 		Areas:           areas,
 		LastSeenEventID: lastSeen,
 	}
-	if err := appendJSONL(threadsPath, record); err != nil {
+	if err := appendLedger(threadsPath, record); err != nil {
 		return err
 	}
 
@@ -205,13 +208,13 @@ func runNote(args []string) error {
 		Confidence: "human_confirmed",
 		TTL:        "until_issue_closed",
 	}
-	if err := appendJSONL(eventsPath, event); err != nil {
+	if err := appendLedger(eventsPath, event); err != nil {
 		return err
 	}
 	if *thread != "" {
 		if sourceThread, ok := threads[*thread]; ok {
 			sourceThread.LastSeenEventID = event.ID
-			if err := appendJSONL(threadsPath, sourceThread); err != nil {
+			if err := appendLedger(threadsPath, sourceThread); err != nil {
 				return err
 			}
 		}
@@ -270,7 +273,7 @@ func runSync(args []string) error {
 		return err
 	}
 	thread.LastSeenEventID = matches[len(matches)-1].ID
-	if err := appendJSONL(threadsPath, thread); err != nil {
+	if err := appendLedger(threadsPath, thread); err != nil {
 		return err
 	}
 	fmt.Print(markdown)

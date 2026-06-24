@@ -8,8 +8,19 @@ import (
 )
 
 func main() {
-	if err := fabric.Run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "fabric:", err)
-		os.Exit(1)
+	mainWithExit(os.Args[1:], os.Exit)
+}
+
+func mainWithExit(args []string, exit func(int)) {
+	if code := mainWithArgs(args); code != 0 {
+		exit(code)
 	}
+}
+
+func mainWithArgs(args []string) int {
+	if err := fabric.Run(args); err != nil {
+		fmt.Fprintln(os.Stderr, "fabric:", err)
+		return 1
+	}
+	return 0
 }

@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var appendLedger = appendJSONL
+
 func ensureInitialized() error {
 	if _, err := os.Stat(configPath); err != nil {
 		if os.IsNotExist(err) {
@@ -143,9 +145,6 @@ func nextEventID(events []DirectionEvent) string {
 
 func eventNumber(id string) int {
 	parts := strings.Split(id, "_")
-	if len(parts) == 0 {
-		return 0
-	}
 	n, _ := strconv.Atoi(parts[len(parts)-1])
 	return n
 }
@@ -177,10 +176,7 @@ func nowString() string {
 }
 
 func mustGetwd() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "."
-	}
+	wd, _ := os.Getwd()
 	return wd
 }
 

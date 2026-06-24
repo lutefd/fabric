@@ -1,10 +1,6 @@
 package fabric
 
-import (
-	"os"
-	"strings"
-	"testing"
-)
+import "testing"
 
 func TestDirectionPacketSyncsAcrossThreads(t *testing.T) {
 	chdirTemp(t)
@@ -59,43 +55,4 @@ func TestPreflightAcceptsTaskBeforeFlags(t *testing.T) {
 	taskDirection := mustRead(t, taskPath)
 	assertContains(t, taskDirection, "Task:\nadd filtering to virtual-store listing")
 	assertContains(t, taskDirection, "Prefer the existing extension points")
-}
-
-func chdirTemp(t *testing.T) {
-	t.Helper()
-	previous, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(t.TempDir()); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := os.Chdir(previous); err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
-func mustRun(t *testing.T, args ...string) {
-	t.Helper()
-	if err := Run(args); err != nil {
-		t.Fatalf("Run(%q): %v", strings.Join(args, " "), err)
-	}
-}
-
-func mustRead(t *testing.T, path string) string {
-	t.Helper()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(data)
-}
-
-func assertContains(t *testing.T, haystack, needle string) {
-	t.Helper()
-	if !strings.Contains(haystack, needle) {
-		t.Fatalf("expected %q to contain %q", haystack, needle)
-	}
 }
