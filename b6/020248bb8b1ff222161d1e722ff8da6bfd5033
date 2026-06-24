@@ -1,0 +1,22 @@
+LICENSE
+  s_99abcc89aab555::t_aad2b2262a3592 1-201
+README.md
+  s_99abcc89aab555::t_aad2b2262a3592 317-318
+  s_99abcc89aab555::t_744a51cac9d510 319-323
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "b6020248bb8b1ff222161d1e722ff8da6bfd5033",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
