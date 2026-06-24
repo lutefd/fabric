@@ -15,6 +15,19 @@ Before major checkpoints:
 When corrected by the human:
 - Run fabric note "<direction>".
 
+Direction has three tiers:
+- live: shared across active worktrees now, not persisted to the durable ledger
+- candidate: probably important, but needs review before becoming durable
+- durable: long-term project guidance, committed to .fabric/ledger/events.jsonl
+
+For interactive use, run fabric note and choose the durability.
+For agent use (non-interactive), prefer:
+  fabric note --candidate "<direction>"
+unless the human explicitly says it is temporary or durable.
+
+Promote a candidate later:
+  fabric promote <event-id>
+
 When continuing PR/review work:
 - Run fabric continue --pr "<pr>".
 - Read .fabric/generated/CONTINUATION_CONTEXT.md.
