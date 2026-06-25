@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -56,6 +58,34 @@ func TestImmutableRuntimeStoreListsDefaultKindsAndRejectsUnknownKind(t *testing.
 	}
 	if _, err := store.ListRuntime(context.Background(), "unknown"); err == nil {
 		t.Fatal("unknown runtime kind accepted")
+	}
+}
+
+func TestImmutableRuntimeStoreReportsLoadErrorsAndConflicts(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, RuntimeThreads), []byte("not a directory"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	store := &ImmutableRuntimeStore{RootDir: root}
+	if _, err := store.ListRuntime(context.Background(), RuntimeThreads); err == nil {
+		t.Fatal("runtime load error ignored")
+	}
+
+	root = t.TempDir()
+	store = &ImmutableRuntimeStore{RootDir: root}
+	event := runtimeEnvelope(t, protocol.EventThreadScopeChanged)
+	if err := WriteImmutable(filepath.Join(root, RuntimeThreads), event); err != nil {
+		t.Fatal(err)
+	}
+	event.Actor.ID = "different"
+	if err := os.MkdirAll(filepath.Join(root, RuntimeProjections), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, RuntimeProjections, event.EventID+".json"), mustMarshalIndentedEvent(t, event), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.ListRuntime(context.Background(), RuntimeThreads, RuntimeProjections); err == nil {
+		t.Fatal("runtime conflict ignored")
 	}
 }
 
