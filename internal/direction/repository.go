@@ -1,13 +1,19 @@
 package direction
 
 import (
+	"errors"
+
 	"github.com/lutefd/fabric/internal/core"
-	"github.com/lutefd/fabric/internal/store"
 	"github.com/lutefd/fabric/protocol"
 )
 
+type Ledger interface {
+	Put(event protocol.EventEnvelope, durable bool) error
+	List() ([]protocol.EventEnvelope, []string, error)
+}
+
 type Repository struct {
-	Ledger store.Ledger
+	Ledger Ledger
 }
 
 func (r Repository) Create(event *core.DirectionEvent) error {
@@ -56,6 +62,9 @@ func (r Repository) PutRelation(relation protocol.Relation, durability string, a
 }
 
 func (r Repository) validate() error {
+	if r.Ledger == nil {
+		return errors.New("direction repository requires a ledger")
+	}
 	_, _, err := r.Ledger.List()
 	return err
 }
