@@ -1,0 +1,32 @@
+.agents/skills/fabric-recall/agents/openai.yaml
+  s_99abcc89aab555::t_310db47224527c 1-2,4-6
+  s_99abcc89aab555::t_faffca3c9bb4a6 3
+.agents/skills/fabric-recall/SKILL.md
+  s_99abcc89aab555::t_310db47224527c 1-2,4-9,11-14
+  s_99abcc89aab555::t_faffca3c9bb4a6 3,10
+internal/cli/agent_skills_test.go
+  s_99abcc89aab555::t_310db47224527c 30,65-67
+AGENTS.md
+  s_99abcc89aab555::t_310db47224527c 16
+internal/skills/templates.go
+  s_99abcc89aab555::t_faffca3c9bb4a6 28,115,122
+  s_99abcc89aab555::t_310db47224527c 12,25-27,29-31,112-114,116-121,123-129,315
+internal/cli/app.go
+  s_99abcc89aab555::t_1bd5467b717765 351
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "8e5555af63fe99f20a64866f7ab3beb204fb266c",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
