@@ -133,7 +133,7 @@ func loadRuntimeThreads() (map[string]ThreadRecord, error) {
 }
 
 func createProjection(purpose, threadID string, scope protocol.Scope, events []DirectionEvent, omitted bool) (protocol.Projection, error) {
-	id, err := protocol.NewProjectionID()
+	id, err := newProjectionID()
 	if err != nil {
 		return protocol.Projection{}, err
 	}
@@ -164,7 +164,7 @@ func createProjection(purpose, threadID string, scope protocol.Scope, events []D
 }
 
 func recordProjectionReceipt(projection protocol.Projection, state, provider string) (protocol.Receipt, error) {
-	id, err := protocol.NewReceiptID()
+	id, err := newReceiptID()
 	if err != nil {
 		return protocol.Receipt{}, err
 	}

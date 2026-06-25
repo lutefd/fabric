@@ -21,6 +21,25 @@ type ImmutableFileStore struct {
 
 var _ protocol.EventStore = (*ImmutableFileStore)(nil)
 
+type tempFile interface {
+	Name() string
+	Write([]byte) (int, error)
+	Sync() error
+	Close() error
+}
+
+var (
+	writeImmutable   = writeImmutableFile
+	mkdirAll         = os.MkdirAll
+	marshalIndent    = json.MarshalIndent
+	readFile         = os.ReadFile
+	createTemp       = func(dir, pattern string) (tempFile, error) { return os.CreateTemp(dir, pattern) }
+	removeFile       = os.Remove
+	linkFile         = os.Link
+	readDir          = os.ReadDir
+	marshalCanonical = json.Marshal
+)
+
 func NewImmutableFileStore(writeDir string, readDirs ...string) *ImmutableFileStore {
 	if len(readDirs) == 0 && writeDir != "" {
 		readDirs = []string{writeDir}
@@ -41,22 +60,23 @@ func (s *ImmutableFileStore) List(_ context.Context) ([]protocol.EventEnvelope, 
 }
 
 func WriteImmutable(dir string, event protocol.EventEnvelope) error {
+	return writeImmutable(dir, event)
+}
+
+func writeImmutableFile(dir string, event protocol.EventEnvelope) error {
 	if err := event.Validate(); err != nil {
 		return err
 	}
-	if strings.ContainsAny(event.EventID, `/\\`) {
-		return errors.New("event_id contains a path separator")
-	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := mkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	encoded, err := json.MarshalIndent(event, "", "  ")
+	encoded, err := marshalIndent(event, "", "  ")
 	if err != nil {
 		return err
 	}
 	encoded = append(encoded, '\n')
 	target := filepath.Join(dir, event.EventID+".json")
-	if existing, err := os.ReadFile(target); err == nil {
+	if existing, err := readFile(target); err == nil {
 		if bytes.Equal(existing, encoded) {
 			return nil
 		}
@@ -65,12 +85,12 @@ func WriteImmutable(dir string, event protocol.EventEnvelope) error {
 		return err
 	}
 
-	temp, err := os.CreateTemp(dir, ".fabric-event-*")
+	temp, err := createTemp(dir, ".fabric-event-*")
 	if err != nil {
 		return err
 	}
 	tempPath := temp.Name()
-	defer os.Remove(tempPath)
+	defer removeFile(tempPath)
 	if _, err := temp.Write(encoded); err != nil {
 		temp.Close()
 		return err
@@ -82,9 +102,9 @@ func WriteImmutable(dir string, event protocol.EventEnvelope) error {
 	if err := temp.Close(); err != nil {
 		return err
 	}
-	if err := os.Link(tempPath, target); err != nil {
+	if err := linkFile(tempPath, target); err != nil {
 		if os.IsExist(err) {
-			existing, readErr := os.ReadFile(target)
+			existing, readErr := readFile(target)
 			if readErr == nil && bytes.Equal(existing, encoded) {
 				return nil
 			}
@@ -102,7 +122,7 @@ func Load(dirs ...string) ([]protocol.EventEnvelope, []string, error) {
 		if dir == "" {
 			continue
 		}
-		entries, err := os.ReadDir(dir)
+		entries, err := readDir(dir)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
@@ -114,7 +134,7 @@ func Load(dirs ...string) ([]protocol.EventEnvelope, []string, error) {
 				continue
 			}
 			path := filepath.Join(dir, entry.Name())
-			raw, err := os.ReadFile(path)
+			raw, err := readFile(path)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -122,7 +142,7 @@ func Load(dirs ...string) ([]protocol.EventEnvelope, []string, error) {
 			if err != nil {
 				return nil, nil, fmt.Errorf("%s: %w", path, err)
 			}
-			canonical, _ := json.Marshal(event)
+			canonical, _ := marshalCanonical(event)
 			if existing, ok := encodedByID[event.EventID]; ok {
 				if !bytes.Equal(existing, canonical) {
 					conflicts = append(conflicts, fmt.Sprintf("event %s has divergent immutable copies", event.EventID))
