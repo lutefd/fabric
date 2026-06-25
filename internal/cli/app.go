@@ -426,7 +426,7 @@ func runThread(args []string) error {
 		return err
 	}
 	if *id == "" {
-		generated, err := protocol.NewThreadID()
+		generated, err := newThreadID()
 		if err != nil {
 			return err
 		}
@@ -572,7 +572,7 @@ func runNote(args []string) error {
 	}
 	if *thread != "" {
 		projection, err := createProjection("record-source", *thread,
-			protocol.Scope{Repo: repoName(), Issue: event.Scope.Issue, PR: event.Scope.PR, Areas: event.Scope.Areas, Paths: event.Scope.Paths}, []DirectionEvent{event}, false)
+			protocol.Scope{Repo: repoName(), Issue: event.Scope.Issue, PR: event.Scope.PR, Areas: event.Scope.Areas, Paths: event.Scope.Paths, Global: event.Scope.Global}, []DirectionEvent{event}, false)
 		if err != nil {
 			return err
 		}

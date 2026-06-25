@@ -74,7 +74,7 @@ func runRelation(args []string) error {
 			return err
 		}
 	}
-	id, err := protocol.NewRelationID()
+	id, err := newRelationID()
 	if err != nil {
 		return err
 	}
