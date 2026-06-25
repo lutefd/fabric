@@ -1,0 +1,6 @@
+interface:
+  display_name: "Recall Fabric Notes"
+  short_description: "Find current repository notes and tasks"
+  default_prompt: "Use $fabric-recall to inspect current Fabric notes without starting a work session."
+policy:
+  allow_implicit_invocation: true

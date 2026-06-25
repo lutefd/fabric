@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/lutefd/fabric/internal/skills"
@@ -47,6 +48,10 @@ func runCommand(args []string) error {
 		return runSync(args[1:])
 	case "status":
 		return runStatus(args[1:])
+	case "list":
+		return runList(args[1:])
+	case "clean":
+		return runClean(args[1:])
 	case "preflight":
 		return runPreflight(args[1:])
 	case "continue":
@@ -86,7 +91,13 @@ Usage:
 	fabric init
 	fabric install-agents
 	fabric thread start --id thread-b --issue VS-123 --area virtual-store/listing
+	fabric thread list
+	fabric thread use thread-b
+	fabric thread clear
 	fabric status
+	fabric list --durability live
+	fabric clean live
+	fabric clean runtime --thread thread-id
 	fabric note "Don't repeat this path"
 	fabric note --candidate "Direction that may matter later"
 	fabric note --durable "Long-term project guidance"
@@ -337,6 +348,7 @@ func ensureSkillLink(source, destination string) error {
 
 func agentSkillNames() []string {
 	return []string{
+		"fabric-recall",
 		"fabric-session",
 		"fabric-provenance",
 		"fabric-record-direction",
@@ -347,8 +359,58 @@ func agentSkillNames() []string {
 }
 
 func runThread(args []string) error {
-	if len(args) == 0 || args[0] != "start" {
-		return errors.New(`expected "fabric thread start"`)
+	if len(args) == 0 {
+		return errors.New(`expected "fabric thread start", "fabric thread list", "fabric thread use", or "fabric thread clear"`)
+	}
+	switch args[0] {
+	case "list":
+		if len(args) != 1 {
+			return errors.New("thread list accepts no arguments")
+		}
+		threads, err := loadThreads()
+		if err != nil {
+			return err
+		}
+		ids := make([]string, 0, len(threads))
+		for id := range threads {
+			ids = append(ids, id)
+		}
+		sort.Strings(ids)
+		for _, id := range ids {
+			fmt.Printf("%s  %s\n", id, compactThreadScope(threads[id]))
+		}
+		setMachineResult(map[string]any{"threads": threads, "count": len(threads)})
+		return nil
+	case "use":
+		if len(args) != 2 {
+			return errors.New("thread use requires a thread id")
+		}
+		threads, err := loadThreads()
+		if err != nil {
+			return err
+		}
+		if _, ok := threads[args[1]]; !ok {
+			return fmt.Errorf("unknown thread %q", args[1])
+		}
+		if err := saveCurrentThreadID(args[1]); err != nil {
+			return err
+		}
+		fmt.Printf("Current thread: %s.\n", args[1])
+		setMachineResult(map[string]any{"current_thread": args[1]})
+		return nil
+	case "clear":
+		if len(args) != 1 {
+			return errors.New("thread clear accepts no arguments")
+		}
+		if err := os.Remove(currentThreadPath); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		fmt.Println("Current thread cleared.")
+		setMachineResult(map[string]any{"current_thread": nil})
+		return nil
+	case "start":
+	default:
+		return errors.New(`expected "fabric thread start", "fabric thread list", "fabric thread use", or "fabric thread clear"`)
 	}
 
 	fs := flag.NewFlagSet("thread start", flag.ContinueOnError)
@@ -394,6 +456,10 @@ func runThread(args []string) error {
 	fmt.Printf("Started thread %s for issue %s, PR %s, area %s.\n", *id, emptyAsNone(*issue), emptyAsNone(*pr), areas.StringOrNone())
 	fmt.Printf("Current thread: %s.\n", *id)
 	return nil
+}
+
+func compactThreadScope(thread ThreadRecord) string {
+	return compactScope(EventScope{Issue: thread.Issue, PR: thread.PR, Areas: thread.Areas, Paths: thread.Paths})
 }
 
 func runNote(args []string) error {
@@ -673,7 +739,9 @@ func runStatus(args []string) error {
 		return err
 	}
 
-	result := map[string]any{"current_thread": current, "record_count": len(events)}
+	active := filterActionableEvents(events)
+	counts := eventDurabilityCounts(active)
+	result := map[string]any{"current_thread": current, "record_count": len(events), "active_record_count": len(active), "durability": counts}
 	fmt.Println("Current thread:")
 	if current == "" {
 		fmt.Println("none")
@@ -711,12 +779,6 @@ func runStatus(args []string) error {
 		}
 		result["pending_records"] = matches
 		fmt.Println()
-		counts := eventDurabilityCounts(events)
-		result["durability"] = counts
-		fmt.Println("Direction durability:")
-		fmt.Printf("- live: %d\n", counts[DurabilityLive])
-		fmt.Printf("- candidate: %d\n", counts[DurabilityCandidate])
-		fmt.Printf("- durable: %d\n", counts[DurabilityDurable])
 	} else if current != "" {
 		fmt.Printf("unknown current thread %q\n", current)
 		fmt.Println()
@@ -731,6 +793,11 @@ func runStatus(args []string) error {
 		fmt.Println("Sync state:")
 		fmt.Println("Run: fabric thread start --issue ... --area ...")
 	}
+	fmt.Println()
+	fmt.Println("Actionable direction:")
+	fmt.Printf("- live: %d\n", counts[DurabilityLive])
+	fmt.Printf("- candidate: %d\n", counts[DurabilityCandidate])
+	fmt.Printf("- durable: %d\n", counts[DurabilityDurable])
 	fmt.Println()
 	fmt.Println("Generated files:")
 	for _, path := range generatedFiles() {

@@ -27,6 +27,7 @@ func TestGeneratedAgentSkillsHaveMetadataAndFocusedWorkflows(t *testing.T) {
 	mustRun(t, "init")
 
 	expected := []string{
+		"fabric-recall",
 		"fabric-session",
 		"fabric-provenance",
 		"fabric-record-direction",
@@ -61,6 +62,9 @@ func TestGeneratedAgentSkillsHaveMetadataAndFocusedWorkflows(t *testing.T) {
 	assertContains(t, session, "stale or unknown current-thread pointer alone is not a reason")
 	assertContains(t, session, "Do not sync after every command")
 	assertContains(t, mustRead(t, ".agents/skills/fabric-session/agents/openai.yaml"), "allow_implicit_invocation: false")
+	recall := mustRead(t, ".agents/skills/fabric-recall/SKILL.md")
+	assertContains(t, recall, "fabric list --durability live --json")
+	assertContains(t, recall, "Do not run status, start a thread, preflight, sync")
 	provenance := mustRead(t, ".agents/skills/fabric-provenance/SKILL.md")
 	assertContains(t, provenance, "context acknowledge")
 	assertContains(t, provenance, "informed_by")
