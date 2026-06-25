@@ -1,0 +1,39 @@
+internal/cli/app.go
+  s_99abcc89aab555::t_9118217f5116b6 94-96,361-412,460-461
+  s_99abcc89aab555::t_41974489293a25 742-743,796-799
+  s_99abcc89aab555::t_82dfeb94a7f81d 51-52,98,741
+  s_99abcc89aab555::t_fd2067530629f5 11
+  s_99abcc89aab555::t_06cbeed5dffffe 53-54,99-100
+internal/cli/storage.go
+  s_99abcc89aab555::t_82dfeb94a7f81d 167-198
+internal/cli/list.go
+  s_99abcc89aab555::t_82dfeb94a7f81d 1-95
+internal/cli/clean.go
+  s_99abcc89aab555::t_49298f2b962802 69,88,91,101-104,106-109
+  s_99abcc89aab555::t_c1c8ed6053eb65 105,110
+  s_99abcc89aab555::t_06cbeed5dffffe 1-68,70-87,89-90,92-100,111-182
+internal/cli/output.go
+  s_99abcc89aab555::t_82dfeb94a7f81d 203
+  s_99abcc89aab555::t_fd2067530629f5 202
+internal/cli/list_test.go
+  s_99abcc89aab555::t_981716ea65ac40 1-2,7-17,39-40,71-88
+  s_99abcc89aab555::t_98a888581125f3 3-6,18-38
+  s_99abcc89aab555::t_fd2067530629f5 41-59
+  s_99abcc89aab555::t_a3c5d3125508a4 60-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "48cb011b4ce0078c4a374bd4bc2770d04c1d0bf9",
+  "prompts": {},
+  "sessions": {
+    "s_99abcc89aab555": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019efb69-40bc-7f81-8976-9475b543b4b1",
+        "model": "kindle-alpha"
+      },
+      "human_author": "Luis Dourado <lfaddourado@gmail.com>"
+    }
+  }
+}
