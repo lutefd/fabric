@@ -199,8 +199,8 @@ func runCapabilities(args []string) error {
 		"transports":     []string{"local-git"},
 		"output_formats": []string{"human", "json"},
 		"operations": []string{
-			"thread.start", "projection.create", "projection.acknowledge",
-			"record.create", "record.state_change", "relation.create", "graph.explain",
+			"thread.start", "thread.list", "thread.select", "thread.clear", "projection.create", "projection.acknowledge",
+			"record.create", "record.list", "record.state_change", "relation.create", "graph.explain",
 		},
 		"explanation": map[string]bool{
 			"causal_relations": true, "availability_relations": true,

@@ -164,6 +164,38 @@ func filterActiveEvents(events []DirectionEvent) []DirectionEvent {
 	return active
 }
 
+// actionableRecordIDs excludes historical resolution records and challenges that
+// already have a resolution. They remain queryable with `fabric list --status any`.
+func actionableRecordIDs(events []DirectionEvent) map[string]bool {
+	resolved := map[string]bool{}
+	for _, event := range events {
+		if event.Kind == "challenge_resolution" && event.Challenges != "" {
+			resolved[event.Challenges] = true
+		}
+	}
+	active := map[string]bool{}
+	for _, event := range events {
+		if event.Kind == "challenge_resolution" || (event.Kind == "challenge" && resolved[event.ID]) {
+			continue
+		}
+		if isActiveEvent(event) {
+			active[event.ID] = true
+		}
+	}
+	return active
+}
+
+func filterActionableEvents(events []DirectionEvent) []DirectionEvent {
+	ids := actionableRecordIDs(events)
+	active := make([]DirectionEvent, 0, len(ids))
+	for _, event := range events {
+		if ids[event.ID] {
+			active = append(active, event)
+		}
+	}
+	return active
+}
+
 func normalizeDurability(d string) string {
 	if d == "" {
 		return DurabilityDurable
