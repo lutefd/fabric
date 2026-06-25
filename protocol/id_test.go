@@ -1,7 +1,10 @@
 package protocol
 
 import (
+	cryptorand "crypto/rand"
 	"encoding/json"
+	"errors"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -63,4 +66,26 @@ func TestDerivedRelationIDsAreStableAndTyped(t *testing.T) {
 	if first != again || first == second || !ValidTypedID(first, "rel") {
 		t.Fatalf("derived IDs first=%q again=%q second=%q", first, again, second)
 	}
+	if _, err := DeriveRelationID("rcp_invalid", "record:one"); err == nil {
+		t.Fatal("invalid receipt ID accepted")
+	}
 }
+
+func TestTypedIDReportsRandomReadErrors(t *testing.T) {
+	previous := cryptorand.Reader
+	cryptorand.Reader = errReader{}
+	defer func() {
+		cryptorand.Reader = previous
+	}()
+	if _, err := NewEventID(); err == nil {
+		t.Fatal("NewEventID succeeded when random source failed")
+	}
+}
+
+type errReader struct{}
+
+func (errReader) Read([]byte) (int, error) {
+	return 0, errors.New("random failed")
+}
+
+var _ io.Reader = errReader{}

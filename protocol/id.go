@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -22,7 +23,7 @@ func NewReceiptID() (string, error)    { return newTypedID("rcp") }
 
 func newTypedID(prefix string) (string, error) {
 	var id [16]byte
-	if _, err := rand.Read(id[:]); err != nil {
+	if _, err := io.ReadFull(rand.Reader, id[:]); err != nil {
 		return "", err
 	}
 	millis := uint64(time.Now().UnixMilli())
@@ -55,10 +56,7 @@ func DeriveRelationID(receiptID, discriminator string) (string, error) {
 		return "", fmt.Errorf("receipt ID must be an rcp_ UUIDv7")
 	}
 	compact := strings.ReplaceAll(strings.TrimPrefix(receiptID, "rcp_"), "-", "")
-	raw, err := hex.DecodeString(compact)
-	if err != nil || len(raw) != 16 {
-		return "", fmt.Errorf("invalid receipt UUID")
-	}
+	raw, _ := hex.DecodeString(compact)
 	digest := sha256.Sum256([]byte(receiptID + "\x00" + discriminator))
 	copy(raw[6:], digest[6:])
 	raw[6] = (raw[6] & 0x0f) | 0x70
