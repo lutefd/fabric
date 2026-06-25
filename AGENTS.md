@@ -13,6 +13,7 @@ Fabric is the repository decision and provenance protocol for agent threads and 
 
 Use the repository skills for detailed workflows:
 
+- $fabric-recall
 - $fabric-session
 - $fabric-provenance
 - $fabric-record-direction

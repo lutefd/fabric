@@ -348,6 +348,7 @@ func ensureSkillLink(source, destination string) error {
 
 func agentSkillNames() []string {
 	return []string{
+		"fabric-recall",
 		"fabric-session",
 		"fabric-provenance",
 		"fabric-record-direction",
