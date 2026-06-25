@@ -71,6 +71,59 @@ func TestDecodeEventRejectsUnknownFieldsOutsideExtensions(t *testing.T) {
 	}
 }
 
+func TestNodeKeyIncludesProviderWhenPresent(t *testing.T) {
+	if got := (NodeRef{Kind: "record", ID: "rec-1"}).Key(); got != "record:rec-1" {
+		t.Fatalf("key without provider = %q", got)
+	}
+	if got := (NodeRef{Kind: "action", Provider: "codex", ID: "opaque"}).Key(); got != "action:codex:opaque" {
+		t.Fatalf("key with provider = %q", got)
+	}
+}
+
+func TestKnownValuePredicates(t *testing.T) {
+	for _, value := range []string{EventRecordCreated, EventRecordStateChanged, EventRelationCreated, EventThreadStarted, EventThreadScopeChanged, EventProjectionCreated, EventReceiptRecorded} {
+		if !KnownEventType(value) {
+			t.Fatalf("KnownEventType(%q) = false", value)
+		}
+	}
+	if KnownEventType("missing") {
+		t.Fatal("unknown event type accepted")
+	}
+
+	for _, value := range []string{RelationDerivedFrom, RelationInformedBy, RelationImplements, RelationSupersedes, RelationChallenges, RelationResolves, RelationDeliveredTo, RelationExposedTo} {
+		if !KnownRelationType(value) {
+			t.Fatalf("KnownRelationType(%q) = false", value)
+		}
+	}
+	if KnownRelationType("missing") {
+		t.Fatal("unknown relation type accepted")
+	}
+
+	for _, value := range []string{"human", "reviewer", "agent", "tool"} {
+		if !KnownActorKind(value) {
+			t.Fatalf("KnownActorKind(%q) = false", value)
+		}
+	}
+	if KnownActorKind("robot") {
+		t.Fatal("unknown actor kind accepted")
+	}
+
+	for _, value := range []string{"active", "expired", "discarded", "superseded", "open", "accepted", "rejected"} {
+		if !KnownStatus(value) {
+			t.Fatalf("KnownStatus(%q) = false", value)
+		}
+	}
+	if KnownStatus("missing") {
+		t.Fatal("unknown status accepted")
+	}
+}
+
+func TestDecodeStrictRejectsMultipleJSONValues(t *testing.T) {
+	if _, err := DecodeEvent([]byte(`{} {}`)); err == nil {
+		t.Fatal("multiple JSON values accepted")
+	}
+}
+
 func FuzzEventEnvelopeValidation(f *testing.F) {
 	f.Add([]byte(`{"schema_version":"fabric/1.0"}`))
 	f.Add([]byte(`not json`))

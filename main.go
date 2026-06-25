@@ -7,7 +7,15 @@ import (
 )
 
 func main() {
-	if code := cli.Execute(os.Args[1:], os.Stderr); code != 0 {
-		os.Exit(code)
+	mainWithExit(os.Args[1:], os.Exit)
+}
+
+func mainWithExit(args []string, exit func(int)) {
+	if code := mainWithArgs(args); code != 0 {
+		exit(code)
 	}
+}
+
+func mainWithArgs(args []string) int {
+	return cli.Execute(args, os.Stderr)
 }

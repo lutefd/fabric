@@ -51,6 +51,60 @@ func TestImmutableFileStoreIsIdempotentAndCreateOnly(t *testing.T) {
 	}
 }
 
+func TestImmutableFileStoreRequiresWriteDir(t *testing.T) {
+	store := NewImmutableFileStore("")
+	if err := store.Put(context.Background(), testEnvelope(t)); err == nil {
+		t.Fatal("Put succeeded without a write directory")
+	}
+}
+
+func TestLedgerRoutesDurableActiveAndSharedEvents(t *testing.T) {
+	durableDir := t.TempDir()
+	activeDir := t.TempDir()
+	sharedDir := t.TempDir()
+	ledger := Ledger{DurableDir: durableDir, ActiveDir: activeDir, SharedDir: sharedDir}
+
+	durableEvent := testEnvelope(t)
+	if err := ledger.Put(durableEvent, true); err != nil {
+		t.Fatal(err)
+	}
+	liveEvent := testEnvelope(t)
+	if err := ledger.Put(liveEvent, false); err != nil {
+		t.Fatal(err)
+	}
+
+	durableEvents, _, err := Load(durableDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(durableEvents) != 1 {
+		t.Fatalf("durable events = %d, want 1", len(durableEvents))
+	}
+	activeEvents, _, err := Load(activeDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(activeEvents) != 0 {
+		t.Fatalf("active events with shared mirror = %d, want 0", len(activeEvents))
+	}
+	events, conflicts, err := ledger.List()
+	if err != nil || len(conflicts) != 0 || len(events) != 2 {
+		t.Fatalf("ledger.List events=%d conflicts=%v err=%v", len(events), conflicts, err)
+	}
+
+	activeOnly := Ledger{ActiveDir: t.TempDir()}
+	if err := activeOnly.Put(testEnvelope(t), false); err != nil {
+		t.Fatal(err)
+	}
+	activeEvents, _, err = Load(activeOnly.ActiveDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(activeEvents) != 1 {
+		t.Fatalf("active-only live events = %d, want 1", len(activeEvents))
+	}
+}
+
 func TestImmutableStoreIgnoresCrashTempFiles(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, ".fabric-event-orphan"), []byte("partial"), 0o644); err != nil {
