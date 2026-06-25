@@ -24,9 +24,14 @@ type Snapshot struct {
 	Conflicts []string
 }
 
+type materializedStateChange struct {
+	Event  protocol.EventEnvelope
+	Change protocol.RecordStateChanged
+}
+
 func Materialize(events []protocol.EventEnvelope) Snapshot {
 	snapshot := Snapshot{Records: map[string]MaterializedRecord{}}
-	children := map[string][]protocol.EventEnvelope{}
+	children := map[string][]materializedStateChange{}
 	for _, event := range events {
 		switch event.EventType {
 		case protocol.EventRecordCreated:
@@ -45,7 +50,10 @@ func Materialize(events []protocol.EventEnvelope) Snapshot {
 				Actor: event.Actor, Trust: event.Trust, HeadActor: event.Actor, HeadTrust: event.Trust,
 			}
 		case protocol.EventRecordStateChanged:
-			children[event.ParentEventID] = append(children[event.ParentEventID], event)
+			var payload protocol.RecordStateChanged
+			if json.Unmarshal(event.Payload, &payload) == nil {
+				children[event.ParentEventID] = append(children[event.ParentEventID], materializedStateChange{Event: event, Change: payload})
+			}
 		case protocol.EventRelationCreated:
 			var payload protocol.RelationCreated
 			if err := json.Unmarshal(event.Payload, &payload); err != nil {
@@ -58,10 +66,9 @@ func Materialize(events []protocol.EventEnvelope) Snapshot {
 
 	for recordID, current := range snapshot.Records {
 		for {
-			var applicable []protocol.EventEnvelope
+			var applicable []materializedStateChange
 			for _, candidate := range children[current.HeadEventID] {
-				var payload protocol.RecordStateChanged
-				if json.Unmarshal(candidate.Payload, &payload) == nil && payload.RecordID == recordID {
+				if candidate.Change.RecordID == recordID {
 					applicable = append(applicable, candidate)
 				}
 			}
@@ -71,7 +78,7 @@ func Materialize(events []protocol.EventEnvelope) Snapshot {
 			if len(applicable) > 1 {
 				ids := make([]string, 0, len(applicable))
 				for _, candidate := range applicable {
-					ids = append(ids, candidate.EventID)
+					ids = append(ids, candidate.Event.EventID)
 				}
 				sort.Strings(ids)
 				message := fmt.Sprintf("record %s has %d competing children of %s", recordID, len(applicable), current.HeadEventID)
@@ -82,11 +89,7 @@ func Materialize(events []protocol.EventEnvelope) Snapshot {
 				snapshot.Conflicts = append(snapshot.Conflicts, message)
 				break
 			}
-			var change protocol.RecordStateChanged
-			if err := json.Unmarshal(applicable[0].Payload, &change); err != nil {
-				snapshot.Conflicts = append(snapshot.Conflicts, fmt.Sprintf("event %s payload: %v", applicable[0].EventID, err))
-				break
-			}
+			change := applicable[0].Change
 			if change.Status != "" {
 				current.Record.Status = change.Status
 			}
@@ -99,9 +102,9 @@ func Materialize(events []protocol.EventEnvelope) Snapshot {
 			if change.ReviewedAt != "" {
 				current.Record.ReviewedAt = change.ReviewedAt
 			}
-			current.HeadEventID = applicable[0].EventID
-			current.HeadActor = applicable[0].Actor
-			current.HeadTrust = applicable[0].Trust
+			current.HeadEventID = applicable[0].Event.EventID
+			current.HeadActor = applicable[0].Event.Actor
+			current.HeadTrust = applicable[0].Event.Trust
 		}
 		snapshot.Records[recordID] = current
 	}

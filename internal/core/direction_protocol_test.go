@@ -1,6 +1,8 @@
 package core
 
 import (
+	cryptorand "crypto/rand"
+	"errors"
 	"testing"
 
 	"github.com/lutefd/fabric/protocol"
@@ -96,4 +98,72 @@ func TestActorAndTrustSources(t *testing.T) {
 			t.Fatalf("ActorAndTrust(%q) = %#v %#v", tc.sourceType, actor, trust)
 		}
 	}
+}
+
+func TestDirectionProtocolReportsIDGenerationErrors(t *testing.T) {
+	previous := cryptorand.Reader
+	cryptorand.Reader = coreErrReader{}
+	defer func() {
+		cryptorand.Reader = previous
+	}()
+
+	if _, _, _, err := PrepareDirection(DirectionEvent{}); err == nil {
+		t.Fatal("PrepareDirection succeeded when record ID generation failed")
+	}
+	if _, err := AutomaticRelations(DirectionEvent{ID: "rec-1", Source: EventSource{URL: "https://example.invalid"}}); err == nil {
+		t.Fatal("AutomaticRelations succeeded when relation ID generation failed")
+	}
+	if _, err := AutomaticRelations(DirectionEvent{ID: "rec-1", Kind: "challenge_resolution", Challenges: "rec-2"}); err == nil {
+		t.Fatal("AutomaticRelations succeeded when challenge relation ID generation failed")
+	}
+
+	cryptorand.Reader = &failAfterReader{failAfter: 1}
+	if _, _, _, err := PrepareDirection(DirectionEvent{}); err == nil {
+		t.Fatal("PrepareDirection succeeded when envelope ID generation failed")
+	}
+	if _, _, err := StateChangeEnvelope(DirectionEvent{}, DirectionEvent{}, "", protocol.ActorRef{Kind: "agent"}, protocol.TrustClaim{Level: "agent_asserted"}); err == nil {
+		t.Fatal("StateChangeEnvelope succeeded when envelope ID generation failed")
+	}
+}
+
+func TestStateChangeEnvelopeValidationFailure(t *testing.T) {
+	before := DirectionEvent{ID: "rec_invalid", HeadEventID: "evt_invalid"}
+	after := DirectionEvent{}
+	if _, _, err := StateChangeEnvelope(before, after, "", protocol.ActorRef{Kind: "agent"}, protocol.TrustClaim{Level: "agent_asserted"}); err == nil {
+		t.Fatal("StateChangeEnvelope accepted invalid before direction")
+	}
+}
+
+func TestAutomaticRelationsAddsChallengeResolution(t *testing.T) {
+	relations, err := AutomaticRelations(DirectionEvent{
+		ID: "rec-source", Kind: "challenge_resolution", Challenges: "rec-target",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(relations) != 1 || relations[0].Type != protocol.RelationResolves || relations[0].To.ID != "rec-target" {
+		t.Fatalf("relations = %#v", relations)
+	}
+}
+
+type coreErrReader struct{}
+
+func (coreErrReader) Read([]byte) (int, error) {
+	return 0, errors.New("random failed")
+}
+
+type failAfterReader struct {
+	reads     int
+	failAfter int
+}
+
+func (r *failAfterReader) Read(p []byte) (int, error) {
+	r.reads++
+	if r.reads > r.failAfter {
+		return 0, errors.New("random failed")
+	}
+	for i := range p {
+		p[i] = byte(i)
+	}
+	return len(p), nil
 }

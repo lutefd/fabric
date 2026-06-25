@@ -41,6 +41,17 @@ func TestRankTieBreaksByKindCreatedAtAndID(t *testing.T) {
 	}
 }
 
+func TestRankTieBreaksByCreatedAt(t *testing.T) {
+	records := []protocol.Record{
+		{RecordID: "late", Kind: "finding", CreatedAt: "2026-06-24T18:00:02Z", Scope: protocol.Scope{Global: true}},
+		{RecordID: "early", Kind: "finding", CreatedAt: "2026-06-24T18:00:01Z", Scope: protocol.Scope{Global: true}},
+	}
+	ranked := Rank(records, RelevanceContext{})
+	if ranked[0].Record.RecordID != "early" {
+		t.Fatalf("first record = %s, want early", ranked[0].Record.RecordID)
+	}
+}
+
 func TestPathMatchesTrimsAndRejectsInvalidPatterns(t *testing.T) {
 	if !PathMatches(" ./internal/**", "./internal/core/model.go") {
 		t.Fatal("recursive path pattern did not match")
